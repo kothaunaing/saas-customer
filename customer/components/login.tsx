@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,15 +8,24 @@ import { LockKeyhole } from "lucide-react";
 import { motion } from "framer-motion";
 import { apiError, login, logout } from "@/customer/lib/api";
 import { pageVariants, sectionVariants, itemVariants } from "@/customer/lib/motion";
+import { useCustomer } from "./provider";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const { authenticated } = useCustomer();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (authenticated) {
+      const next = searchParams.get("next");
+      router.replace(next?.startsWith("/") ? next : "/account");
+    }
+  }, [authenticated, searchParams, router]);
 
   async function submit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();

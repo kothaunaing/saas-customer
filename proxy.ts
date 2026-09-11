@@ -13,6 +13,12 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Never intercept API routes or Next.js static assets
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
   const authenticated = Boolean(
     request.cookies.get('customer_access_token')?.value,
   );
@@ -27,13 +33,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  if (pathname === '/login' && authenticated) {
-    return NextResponse.redirect(new URL('/account', request.url));
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.svg|images/).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.svg|favicon.ico|images/).*)'],
 };

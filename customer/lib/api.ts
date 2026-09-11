@@ -57,7 +57,7 @@ export type SalonSummary = {
 };
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4010/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "/api",
   withCredentials: true,
   headers: {
     "x-serenity-portal": "customer",
@@ -81,8 +81,14 @@ export async function getSession() {
   try {
     return (await api.get<SessionUser>("/auth/me")).data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401)
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      try {
+        await logout();
+      } catch {
+        // ignore
+      }
       return null;
+    }
     throw error;
   }
 }
