@@ -1,7 +1,7 @@
-'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   MapPin,
   Star,
@@ -9,10 +9,10 @@ import {
   Clock3,
   ArrowRight,
   ArrowLeft,
-} from 'lucide-react';
-import Link from 'next/link';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+} from "lucide-react";
+import Link from "next/link";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import {
   salons,
   treatmentImage,
@@ -20,17 +20,16 @@ import {
   dateLabel,
   timeLabel,
   type SalonId,
-} from '@/customer/lib/customer-data';
-import { initials, duration, money } from '@/customer/lib/demo-data';
-import { useCustomer } from './provider';
-import { useWorkspace } from '@/customer/components/workspace-provider';
+} from "@/customer/lib/customer-data";
+import { initials, duration, money } from "@/customer/lib/demo-data";
+import { useCustomer } from "./provider";
 export function Stars({ rating = 5 }: { rating?: number }) {
   return (
     <span className="customer-stars" aria-label={`${rating} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((n) => (
         <Star
           key={n}
-          fill={n <= Math.round(rating) ? 'currentColor' : 'none'}
+          fill={n <= Math.round(rating) ? "currentColor" : "none"}
         />
       ))}
     </span>
@@ -38,10 +37,9 @@ export function Stars({ rating = 5 }: { rating?: number }) {
 }
 export default function SalonPage({ salonId }: { salonId: SalonId }) {
   const customer = useCustomer();
-  const { data } = useWorkspace();
   const router = useRouter();
-  const [tab, setTab] = useState('overview');
-  const [filter, setFilter] = useState('All');
+  const [tab, setTab] = useState("overview");
+  const [filter, setFilter] = useState("All");
   const s = salons[salonId];
   const catalog = customer.catalog(salonId);
   const services = catalog.services.filter((s) => s.active);
@@ -49,7 +47,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
   const average = reviews.length
     ? reviews.reduce((v, r) => v + r.rating, 0) / reviews.length
     : 0;
-  const name = salonId === 'serenity' ? data.settings.name : s.name;
+  const name = catalog.name ?? s.name;
   function book(serviceId?: string, staffId?: string) {
     const selectedService =
       serviceId ??
@@ -69,10 +67,10 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
         <nav className="customer-tabs" aria-label="Salon sections">
           <TabsList>
             {[
-              ['overview', 'Overview'],
-              ['treatments', 'Treatments'],
-              ['team', 'Our team'],
-              ['reviews', 'Reviews'],
+              ["overview", "Overview"],
+              ["treatments", "Treatments"],
+              ["team", "Our team"],
+              ["reviews", "Reviews"],
             ].map(([value, label]) => (
               <TabsTrigger value={value} key={value}>
                 {label}
@@ -91,12 +89,12 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
             />
             <div className="salon-hero-content">
               <h1>{name}</h1>
-              <p>{s.tagline}</p>
+              <p>{catalog.tagline ?? s.tagline}</p>
               <div className="customer-meta">
                 {reviews.length > 0 && (
                   <button
                     className="flex items-center gap-2"
-                    onClick={() => setTab('reviews')}
+                    onClick={() => setTab("reviews")}
                   >
                     <Stars rating={average} />
                     <span>
@@ -106,7 +104,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
                 )}
                 <span>
                   <MapPin size={16} />
-                  {salonId === 'serenity' ? data.settings.address : s.address}
+                  {catalog.address ?? s.address}
                 </span>
               </div>
             </div>
@@ -119,7 +117,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
               </button>
               <button
                 className="customer-btn"
-                onClick={() => setTab('treatments')}
+                onClick={() => setTab("treatments")}
               >
                 See treatments
               </button>
@@ -127,9 +125,9 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
             <div className="salon-overview-grid">
               <div className="customer-panel">
                 <h2>About {name}</h2>
-                <p>{s.description}</p>
+                <p>{catalog.description ?? s.description}</p>
                 <div className="salon-amenities">
-                  {s.amenities.map((a) => (
+                  {(catalog.amenities ?? s.amenities).map((a) => (
                     <span key={a}>
                       <Check />
                       {a}
@@ -140,7 +138,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
               <div className="customer-panel">
                 <h2>Opening hours</h2>
                 <div className="salon-hours">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                     (day, i) => {
                       const shifts = catalog.staff
                         .filter((t) => t.active)
@@ -157,7 +155,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
                                     .sort()
                                     .at(-1)!,
                                 )}`
-                              : 'Closed'}
+                              : "Closed"}
                           </strong>
                         </div>
                       );
@@ -181,7 +179,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
               className="treatment-filters"
             >
               <TabsList>
-                {['All', ...new Set(services.map((s) => s.category))].map(
+                {["All", ...new Set(services.map((s) => s.category))].map(
                   (c) => (
                     <TabsTrigger value={c} key={c}>
                       {c}
@@ -192,7 +190,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
             </Tabs>
             <div className="treatment-grid">
               {services
-                .filter((s) => filter === 'All' || s.category === filter)
+                .filter((s) => filter === "All" || s.category === filter)
                 .map((service, i) => (
                   <article className="treatment-card" key={service.id}>
                     <div className="treatment-photo">
@@ -259,7 +257,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
                         </span>
                         <div>
                           <h3>{t.name}</h3>
-                          <p>{salonId === 'lotus' ? t.role : bio.title}</p>
+                          <p>{salonId === "lotus" ? t.role : bio.title}</p>
                         </div>
                       </div>
                       <p>{bio.text}</p>
@@ -270,7 +268,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
                             {(
                               ratings.reduce((s, r) => s + r.rating, 0) /
                               ratings.length
-                            ).toFixed(1)}{' '}
+                            ).toFixed(1)}{" "}
                             · {ratings.length} reviews
                           </span>
                         </div>
@@ -279,7 +277,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
                         className="customer-btn"
                         onClick={() => book(undefined, t.id)}
                       >
-                        Book with {t.name.split(' ')[0]}
+                        Book with {t.name.split(" ")[0]}
                         <ArrowRight size={13} />
                       </button>
                     </article>

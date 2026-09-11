@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Check,
@@ -14,27 +15,26 @@ import {
   Scissors,
   UserRound,
   UsersRound,
-} from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { availableSlots } from '@/customer/lib/booking';
+} from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { getAvailability } from "@/customer/lib/api";
 import {
-  CUSTOMER_DEMO_NOW,
   CUSTOMER_FIRST_DATE,
   dateLabel,
   salons,
   timeLabel,
   type SalonId,
-} from '@/customer/lib/customer-data';
-import { duration, initials, money } from '@/customer/lib/demo-data';
-import { useCustomer, type Contact, type OwnedBooking } from './provider';
+} from "@/customer/lib/customer-data";
+import { duration, initials, money } from "@/customer/lib/demo-data";
+import { useCustomer, type Contact, type OwnedBooking } from "./provider";
 
 const labels = [
-  'Service',
-  'Specialist',
-  'Date & time',
-  'Your details',
-  'Confirm',
+  "Service",
+  "Specialist",
+  "Date & time",
+  "Your details",
+  "Confirm",
 ];
 
 export default function BookingFlow({ salonId }: { salonId: SalonId }) {
@@ -51,65 +51,89 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
     customer.draft?.serviceId ??
       original?.serviceId ??
       source.services.find((item) => item.active)?.id ??
-      '',
+      "",
   );
   const [staffId, setStaffId] = useState(
-    customer.draft?.staffId ?? original?.staffId ?? 'any',
+    customer.draft?.staffId ?? original?.staffId ?? "any",
   );
   const [date, setDate] = useState(original?.date ?? CUSTOMER_FIRST_DATE);
-  const [time, setTime] = useState(original?.time ?? '');
+  const [time, setTime] = useState(original?.time ?? "");
   const [contact, setContact] = useState<Contact>(() => {
     const owned = customer.owned.find(
       (item) => item.appointmentId === original?.id && item.salonId === salonId,
     );
     return owned?.contact ?? customer.profile;
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [result, setResult] = useState<OwnedBooking | null>(null);
   const [saving, setSaving] = useState(false);
   const service = source.services.find((item) => item.id === serviceId);
   const qualified = source.staff.filter(
     (item) => item.active && item.services.includes(serviceId),
   );
-  const slots = serviceId
-    ? availableSlots(
-        date,
-        serviceId,
-        staffId,
-        source.appointments,
-        source.staff,
-        source.services,
-        CUSTOMER_DEMO_NOW,
-        original?.id,
-      )
-    : [];
+  const availability = useQuery({
+    queryKey: ["availability", salonId, date, serviceId, staffId],
+    queryFn: () => getAvailability(salonId, date, serviceId, staffId),
+    enabled: Boolean(date && serviceId && staffId),
+  });
+  const slots = availability.data ?? [];
   const selectedSlot = slots.find((slot) => slot.time === time);
   const resolvedStaffId =
-    staffId === 'any' ? (selectedSlot?.staffIds[0] ?? '') : staffId;
+    staffId === "any" ? (selectedSlot?.staffIds[0] ?? "") : staffId;
   const member = source.staff.find((item) => item.id === resolvedStaffId);
 
+  if (customer.loading) {
+    return (
+      <main className="customer-container narrow">
+        Loading booking details…
+      </main>
+    );
+  }
+  if (!customer.authenticated) {
+    return (
+      <main className="customer-container customer-login">
+        <section className="customer-panel customer-login-card">
+          <h1>Sign in to book</h1>
+          <p className="customer-lead">
+            Your account keeps confirmations and appointment changes in one
+            place.
+          </p>
+          <Link
+            className="customer-btn primary full"
+            href={`/login?next=/${salonId}/appointment`}
+          >
+            Sign in to continue
+          </Link>
+          <Link className="customer-back-link" href={`/${salonId}`}>
+            Back to the salon
+          </Link>
+        </section>
+      </main>
+    );
+  }
+
   function next() {
-    setError('');
+    setError("");
     if (step === 0 && !serviceId)
-      return setError('Choose a treatment to continue.');
+      return setError("Choose a treatment to continue.");
     if (step === 1 && !staffId)
-      return setError('Choose a specialist to continue.');
+      return setError("Choose a specialist to continue.");
     if (step === 2 && (!date || !time))
-      return setError('Choose an available date and time.');
+      return setError("Choose an available date and time.");
     if (
       step === 3 &&
       (!contact.name.trim() ||
         !/^\S+@\S+\.\S+$/.test(contact.email) ||
-        contact.phone.replace(/\D/g, '').length < 7)
+        contact.phone.replace(/\D/g, "").length < 7)
     )
-      return setError('Enter your name, a valid email, and phone number.');
+      return setError("Enter your name, a valid email, and phone number.");
     setStep((value) => Math.min(4, value + 1));
   }
 
   async function confirm() {
     if (!service || !resolvedStaffId || !time) return;
     setSaving(true);
-    setError('');
+    setError("");
     try {
       const booking = await customer.reserve({
         ...contact,
@@ -125,7 +149,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Your booking could not be saved.',
+          : "Your booking could not be saved.",
       );
     } finally {
       setSaving(false);
@@ -145,9 +169,9 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
           <div className="customer-confirm-check">
             <Check size={30} />
           </div>
-          <h1>{original ? 'Your booking is updated' : "You're booked in"}</h1>
+          <h1>{original ? "Your booking is updated" : "You're booked in"}</h1>
           <p>
-            A confirmation is on its way to your inbox. Reference{' '}
+            A confirmation is on its way to your inbox. Reference{" "}
             <strong>{result.reference}</strong>
           </p>
           <div className="booking-divider" />
@@ -158,7 +182,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
             </li>
             <li>
               <Clock3 />
-              {service.name} · {duration(service.duration)} ·{' '}
+              {service.name} · {duration(service.duration)} ·{" "}
               {money(service.price)}
             </li>
             <li>
@@ -195,7 +219,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
           <div className="contents" key={label}>
             <button
               type="button"
-              className={`${index === step ? 'active' : ''} ${index < step ? 'done' : ''}`}
+              className={`${index === step ? "active" : ""} ${index < step ? "done" : ""}`}
               disabled={index > step}
               onClick={() => index < step && setStep(index)}
             >
@@ -226,7 +250,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
               .map((item) => (
                 <label
                   htmlFor={`service-${item.id}`}
-                  className={`booking-choice ${serviceId === item.id ? 'selected' : ''}`}
+                  className={`booking-choice ${serviceId === item.id ? "selected" : ""}`}
                   key={item.id}
                 >
                   <RadioGroupItem id={`service-${item.id}`} value={item.id} />
@@ -261,12 +285,12 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
             value={staffId}
             onValueChange={(value) => {
               setStaffId(String(value));
-              setTime('');
+              setTime("");
             }}
           >
             <label
               htmlFor="specialist-any"
-              className={`booking-choice specialist-any ${staffId === 'any' ? 'selected' : ''}`}
+              className={`booking-choice specialist-any ${staffId === "any" ? "selected" : ""}`}
             >
               <RadioGroupItem id="specialist-any" value="any" />
               <span className="customer-avatar">
@@ -283,7 +307,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
             {qualified.map((person) => (
               <label
                 htmlFor={`specialist-${person.id}`}
-                className={`booking-choice ${staffId === person.id ? 'selected' : ''}`}
+                className={`booking-choice ${staffId === person.id ? "selected" : ""}`}
                 key={person.id}
               >
                 <RadioGroupItem
@@ -294,8 +318,8 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                 <div className="booking-choice-body">
                   <h3>{person.name}</h3>
                   <p>
-                    {person.role === 'Staff'
-                      ? 'Beauty specialist'
+                    {person.role === "Staff"
+                      ? "Beauty specialist"
                       : person.role}
                   </p>
                 </div>
@@ -323,24 +347,26 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
               <Calendar
                 className="booking-calendar"
                 mode="single"
-                selected={new Date(date + 'T12:00:00')}
-                defaultMonth={new Date(CUSTOMER_FIRST_DATE + 'T12:00:00')}
+                selected={new Date(date + "T12:00:00")}
+                defaultMonth={new Date(CUSTOMER_FIRST_DATE + "T12:00:00")}
                 disabled={{
-                  before: new Date(CUSTOMER_FIRST_DATE + 'T12:00:00'),
+                  before: new Date(CUSTOMER_FIRST_DATE + "T12:00:00"),
                 }}
                 onSelect={(value) => {
                   if (value) {
                     setDate(
-                      `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`,
+                      `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`,
                     );
-                    setTime('');
+                    setTime("");
                   }
                 }}
               />
             </div>
             <div className="customer-panel">
               <h2>{dateLabel(date)}</h2>
-              {slots.length ? (
+              {availability.isLoading ? (
+                <div className="customer-empty">Checking availability…</div>
+              ) : slots.length ? (
                 <RadioGroup
                   className="booking-time-grid"
                   value={time}
@@ -348,12 +374,12 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                 >
                   {slots.map((slot) => (
                     <label
-                      htmlFor={`time-${slot.time.replace(':', '-')}`}
-                      className={`time-choice ${time === slot.time ? 'selected' : ''}`}
+                      htmlFor={`time-${slot.time.replace(":", "-")}`}
+                      className={`time-choice ${time === slot.time ? "selected" : ""}`}
                       key={slot.time}
                     >
                       <RadioGroupItem
-                        id={`time-${slot.time.replace(':', '-')}`}
+                        id={`time-${slot.time.replace(":", "-")}`}
                         value={slot.time}
                       />
                       {timeLabel(slot.time)}
@@ -418,7 +444,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
               </small>
             </label>
             <label className="customer-field">
-              Anything we should know?{' '}
+              Anything we should know?{" "}
               <span className="font-normal muted">(optional)</span>
               <textarea
                 value={contact.notes}
@@ -453,10 +479,10 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                   onClick={confirm}
                 >
                   {saving
-                    ? 'Confirming…'
+                    ? "Confirming…"
                     : original
-                      ? 'Confirm new time'
-                      : 'Confirm booking'}
+                      ? "Confirm new time"
+                      : "Confirm booking"}
                 </button>
                 <button
                   className="customer-btn ghost"
@@ -529,7 +555,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
             onClick={next}
             disabled={
               (step === 1 && qualified.length === 0) ||
-              (step === 2 && slots.length === 0)
+              (step === 2 && (availability.isLoading || slots.length === 0))
             }
           >
             Continue

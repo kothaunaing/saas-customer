@@ -1,9 +1,26 @@
-'use client';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowUpRight, MapPin, Star } from 'lucide-react';
-import { salons, salonIds, sampleReviews } from '@/customer/lib/customer-data';
+"use client";
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowUpRight, MapPin, Star } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getSalons } from "@/customer/lib/api";
+import { salons, salonIds, sampleReviews } from "@/customer/lib/customer-data";
 export default function Discover() {
+  const query = useQuery({ queryKey: ["salon-list"], queryFn: getSalons });
+  const rows =
+    query.data ??
+    salonIds.map((slug) => ({
+      slug,
+      name: salons[slug].name,
+      tagline: salons[slug].tagline,
+      address: salons[slug].address,
+      city: "Yangon",
+      imageUrl: salons[slug].image,
+      reviewCount: sampleReviews.filter((review) => review.salonId === slug)
+        .length,
+      serviceCount: 0,
+      rating: null,
+    }));
   return (
     <main className="customer-container discover">
       <div className="customer-intro">
@@ -19,43 +36,44 @@ export default function Discover() {
         <span>Yangon, Myanmar</span>
       </div>
       <div className="salon-grid">
-        {salonIds.map((id) => {
-          const s = salons[id];
-          const reviews = sampleReviews.filter((r) => r.salonId === id);
+        {rows.map((salon) => {
+          const id = salon.slug;
+          const fallback = salons[id];
           return (
             <Link href={`/${id}`} className="salon-card" key={id}>
               <div className="salon-card-image">
                 <Image
-                  src={s.image}
+                  src={salon.imageUrl || fallback.image}
                   alt={
-                    id === 'serenity'
-                      ? 'A peaceful spa setting with soft towels and flowers'
-                      : 'A welcoming salon with styling chairs and mirrors'
+                    id === "serenity"
+                      ? "A peaceful spa setting with soft towels and flowers"
+                      : "A welcoming salon with styling chairs and mirrors"
                   }
                   fill
                   sizes="(max-width: 700px) 100vw, 50vw"
                   priority
                 />
                 <span className="salon-image-label">
-                  {id === 'serenity' ? 'SPA & WELLNESS' : 'HAIR & BEAUTY'}
+                  {id === "serenity" ? "SPA & WELLNESS" : "HAIR & BEAUTY"}
                 </span>
               </div>
               <div className="salon-card-body">
                 <div className="customer-between">
-                  <h2>{s.name}</h2>
+                  <h2>{salon.name}</h2>
                   <ArrowUpRight size={18} />
                 </div>
-                <p>{s.tagline}</p>
+                <p>{salon.tagline}</p>
                 <div className="customer-meta">
-                  {reviews.length > 0 && (
+                  {salon.reviewCount > 0 && (
                     <span className="customer-rating">
                       <Star size={14} fill="currentColor" />
-                      4.8 <small>({reviews.length} reviews)</small>
+                      {(salon.rating ?? 5).toFixed(1)}{" "}
+                      <small>({salon.reviewCount} reviews)</small>
                     </span>
                   )}
                   <span>
                     <MapPin size={14} />
-                    Yangon
+                    {salon.city ?? "Yangon"}
                   </span>
                 </div>
               </div>

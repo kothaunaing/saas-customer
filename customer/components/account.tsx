@@ -1,8 +1,9 @@
-'use client';
+"use client";
+/* oxlint-disable react/react-compiler -- synchronizes an editable draft with asynchronously loaded account data */
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Clock3,
@@ -11,7 +12,7 @@ import {
   Pencil,
   Star,
   UserRound,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,17 +22,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { canCustomerManage } from '@/customer/lib/booking';
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { canCustomerManage } from "@/customer/lib/booking";
 import {
   CUSTOMER_DEMO_NOW,
   dateLabel,
   salons,
   timeLabel,
-} from '@/customer/lib/customer-data';
-import { duration } from '@/customer/lib/demo-data';
-import { useCustomer, type Contact, type OwnedBooking } from './provider';
+} from "@/customer/lib/customer-data";
+import { duration } from "@/customer/lib/demo-data";
+import { useCustomer, type Contact, type OwnedBooking } from "./provider";
 
 export default function AccountPage() {
   const customer = useCustomer();
@@ -39,12 +40,37 @@ export default function AccountPage() {
   const [cancelTarget, setCancelTarget] = useState<OwnedBooking | null>(null);
   const [reviewTarget, setReviewTarget] = useState<OwnedBooking | null>(null);
   const [rating, setRating] = useState(5);
-  const [review, setReview] = useState('');
+  const [review, setReview] = useState("");
   const [profile, setProfile] = useState<Contact>(customer.profile);
-  const [profileError, setProfileError] = useState('');
-  const [dialogError, setDialogError] = useState('');
+  const [profileError, setProfileError] = useState("");
+  const [dialogError, setDialogError] = useState("");
   const [saving, setSaving] = useState(false);
-  const points = 1240;
+  const points = customer.points;
+  useEffect(() => setProfile(customer.profile), [customer.profile]);
+
+  if (customer.loading) {
+    return (
+      <main className="customer-container narrow">Loading your account…</main>
+    );
+  }
+  if (!customer.authenticated) {
+    return (
+      <main className="customer-container customer-login">
+        <section className="customer-panel customer-login-card">
+          <h1>Sign in to your account</h1>
+          <p className="customer-lead">
+            View appointments, rewards, and profile details securely.
+          </p>
+          <Link
+            className="customer-btn primary full"
+            href="/login?next=/account"
+          >
+            Sign in
+          </Link>
+        </section>
+      </main>
+    );
+  }
 
   function details(owned: OwnedBooking) {
     const source = customer.catalog(owned.salonId);
@@ -71,12 +97,12 @@ export default function AccountPage() {
     );
   const upcoming = records.filter(
     (record) =>
-      !['Completed', 'Cancelled', 'No-show'].includes(
+      !["Completed", "Cancelled", "No-show"].includes(
         record.appointment!.status,
       ),
   );
   const past = records.filter((record) =>
-    ['Completed', 'Cancelled', 'No-show'].includes(record.appointment!.status),
+    ["Completed", "Cancelled", "No-show"].includes(record.appointment!.status),
   );
 
   function reschedule(owned: OwnedBooking) {
@@ -95,7 +121,7 @@ export default function AccountPage() {
   async function cancelBooking() {
     if (!cancelTarget) return;
     setSaving(true);
-    setDialogError('');
+    setDialogError("");
     try {
       await customer.cancel(cancelTarget);
       setCancelTarget(null);
@@ -103,46 +129,46 @@ export default function AccountPage() {
       setDialogError(
         cause instanceof Error
           ? cause.message
-          : 'The booking could not be cancelled.',
+          : "The booking could not be cancelled.",
       );
     } finally {
       setSaving(false);
     }
   }
 
-  function sendReview() {
+  async function sendReview() {
     if (!reviewTarget) return;
-    setDialogError('');
+    setDialogError("");
     try {
-      customer.addReview(reviewTarget, rating, review);
+      await customer.addReview(reviewTarget, rating, review);
       setReviewTarget(null);
-      setReview('');
+      setReview("");
       setRating(5);
     } catch (cause) {
       setDialogError(
         cause instanceof Error
           ? cause.message
-          : 'The review could not be saved.',
+          : "The review could not be saved.",
       );
     }
   }
 
   async function saveProfile(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
-    setProfileError('');
+    setProfileError("");
     if (
       !profile.name.trim() ||
       !/^\S+@\S+\.\S+$/.test(profile.email) ||
-      profile.phone.replace(/\D/g, '').length < 7
+      profile.phone.replace(/\D/g, "").length < 7
     ) {
-      setProfileError('Enter your name, a valid email, and phone number.');
+      setProfileError("Enter your name, a valid email, and phone number.");
       return;
     }
     setSaving(true);
     try {
       await customer.setProfile(profile);
     } catch {
-      setProfileError('Your profile could not be saved.');
+      setProfileError("Your profile could not be saved.");
     } finally {
       setSaving(false);
     }
@@ -168,7 +194,7 @@ export default function AccountPage() {
             </p>
           </div>
           <span
-            className={`customer-status ${appointment.status === 'Cancelled' ? 'cancelled' : ''}`}
+            className={`customer-status ${appointment.status === "Cancelled" ? "cancelled" : ""}`}
           >
             {appointment.status}
           </span>
@@ -205,18 +231,18 @@ export default function AccountPage() {
             <button
               className="customer-btn ghost"
               onClick={() => {
-                setDialogError('');
+                setDialogError("");
                 setCancelTarget(record.owned);
               }}
             >
               Cancel booking
             </button>
           )}
-          {appointment.status === 'Completed' && !reviewed && (
+          {appointment.status === "Completed" && !reviewed && (
             <button
               className="customer-btn"
               onClick={() => {
-                setDialogError('');
+                setDialogError("");
                 setReviewTarget(record.owned);
               }}
             >
@@ -287,7 +313,7 @@ export default function AccountPage() {
                 ))
               ) : (
                 <div className="customer-panel customer-empty">
-                  No past visits in this demo account.
+                  No past visits yet.
                 </div>
               )}
             </div>
@@ -312,11 +338,7 @@ export default function AccountPage() {
               </div>
             </div>
             <div className="account-reward-grid">
-              {[
-                { name: '$10 off your next visit', points: 500 },
-                { name: 'Complimentary gel manicure', points: 1500 },
-                { name: 'Signature facial experience', points: 2500 },
-              ].map((reward) => (
+              {customer.rewards.map((reward) => (
                 <article className="customer-panel" key={reward.name}>
                   <Gift className="pink" />
                   <h3>{reward.name}</h3>
@@ -326,14 +348,14 @@ export default function AccountPage() {
                     disabled={points < reward.points}
                   >
                     {points >= reward.points
-                      ? 'Redeem at the salon'
+                      ? "Redeem at the salon"
                       : `${(reward.points - points).toLocaleString()} more points`}
                   </button>
                 </article>
               ))}
             </div>
             <p className="customer-profile-note">
-              Reward redemption is a demo. Your points are not deducted.
+              Rewards are redeemed with the salon during your visit.
             </p>
           </section>
         </TabsContent>
@@ -387,18 +409,19 @@ export default function AccountPage() {
                 </p>
               )}
               <button className="customer-btn primary" disabled={saving}>
-                {saving ? 'Saving…' : 'Save profile'}
+                {saving ? "Saving…" : "Save profile"}
               </button>
             </form>
             <aside className="customer-panel">
-              <h2>Account demo</h2>
+              <h2>Your customer account</h2>
               <p>
-                This customer area uses sample data and in-memory changes.
-                Refreshing the page resets bookings, profile changes, reviews,
-                and rewards.
+                Your bookings, profile, reviews, and reward balance are loaded
+                securely from the booking service.
               </p>
               <div className="booking-divider" />
-              <p>No real email, SMS, payment, or reward transaction is sent.</p>
+              <p>
+                Contact the salon if you need help within 24 hours of a visit.
+              </p>
             </aside>
           </section>
         </TabsContent>
@@ -413,7 +436,7 @@ export default function AccountPage() {
             <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
             <AlertDialogDescription>
               You can cancel online until 24 hours before the appointment. This
-              changes demo data only.
+              updates your appointment immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {dialogError && (
@@ -430,7 +453,7 @@ export default function AccountPage() {
               disabled={saving}
               onClick={cancelBooking}
             >
-              {saving ? 'Cancelling…' : 'Cancel booking'}
+              {saving ? "Cancelling…" : "Cancel booking"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -443,15 +466,14 @@ export default function AccountPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>How was your visit?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your review will appear on the salon’s Reviews tab in this demo
-              session.
+              Your review will appear on the salon’s Reviews tab session.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="review-stars-input" aria-label="Rating">
             {[1, 2, 3, 4, 5].map((value) => (
               <button
                 aria-label={`${value} stars`}
-                className={value <= rating ? 'selected' : ''}
+                className={value <= rating ? "selected" : ""}
                 key={value}
                 onClick={() => setRating(value)}
               >

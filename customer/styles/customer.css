@@ -111,14 +111,16 @@
   font-size: 13px;
   margin-bottom: 15px;
 }
-.customer-menu a {
+.customer-menu a,
+.customer-menu button {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 9px 0;
   font-size: 14px;
 }
-.customer-menu a:hover {
+.customer-menu a:hover,
+.customer-menu button:hover {
   color: var(--primary);
 }
 .customer-container {
@@ -277,7 +279,7 @@
   object-position: center 48%;
 }
 .salon-hero:after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(0deg, #0d0c0bf0, transparent 100%);
@@ -367,13 +369,13 @@
   z-index: 15;
   padding: 0 24px;
 }
-.customer-tabs [data-slot='tabs-list'] {
+.customer-tabs [data-slot="tabs-list"] {
   height: 54px;
   background: none;
   gap: 8px;
   padding: 0;
 }
-.customer-tabs [data-slot='tabs-trigger'] {
+.customer-tabs [data-slot="tabs-trigger"] {
   height: 54px;
   padding: 0 14px;
   border-radius: 0;
@@ -384,11 +386,11 @@
   box-shadow: none !important;
   flex: none;
 }
-.customer-tabs [data-slot='tabs-trigger'][data-active] {
+.customer-tabs [data-slot="tabs-trigger"][data-active] {
   color: white;
   border-bottom: 2px solid #fa3079;
 }
-.customer-tabs [data-slot='tabs-trigger']:after {
+.customer-tabs [data-slot="tabs-trigger"]:after {
   display: none;
 }
 .customer-panel {
@@ -443,19 +445,19 @@
 .treatment-filters {
   margin: 25px 0;
 }
-.treatment-filters [data-slot='tabs-list'] {
+.treatment-filters [data-slot="tabs-list"] {
   height: auto;
   flex-wrap: wrap;
   background: #2b2623;
   padding: 4px;
   border-radius: 10px;
 }
-.treatment-filters [data-slot='tabs-trigger'] {
+.treatment-filters [data-slot="tabs-trigger"] {
   font-size: 14px;
   padding: 7px 12px;
   color: #b2aaa2;
 }
-.treatment-filters [data-slot='tabs-trigger'][data-active] {
+.treatment-filters [data-slot="tabs-trigger"][data-active] {
   background: #49403a;
   color: white;
 }
@@ -569,10 +571,10 @@
   font-size: 13px;
   color: #aaa49e;
 }
-.review-meter [data-slot='progress'] {
+.review-meter [data-slot="progress"] {
   flex: 1;
 }
-.review-meter [data-slot='progress-track'] {
+.review-meter [data-slot="progress-track"] {
   height: 7px;
   background: #47232f;
 }
@@ -663,7 +665,7 @@
   border-color: #d63570;
   box-shadow: 0 0 0 3px #fa307910;
 }
-.booking-choice [data-slot='radio-group-item'] {
+.booking-choice [data-slot="radio-group-item"] {
   margin-top: 5px;
   flex-shrink: 0;
 }
@@ -700,7 +702,7 @@
 .booking-calendar button {
   color: #ddd5cf;
 }
-.booking-calendar button[data-selected-single='true'] {
+.booking-calendar button[data-selected-single="true"] {
   background: #fa3079 !important;
   color: white !important;
 }
@@ -731,7 +733,7 @@
   border-color: #fa3079;
   color: white;
 }
-.time-choice [data-slot='radio-group-item'] {
+.time-choice [data-slot="radio-group-item"] {
   position: absolute;
   opacity: 0;
   left: 0;
@@ -745,6 +747,30 @@
 }
 .booking-form {
   max-width: 640px;
+}
+.customer-login {
+  min-height: calc(100vh - 180px);
+  display: grid;
+  place-items: center;
+}
+.customer-login-card {
+  width: min(100%, 460px);
+  padding: 36px;
+  display: grid;
+  gap: 24px;
+}
+.customer-login-card h1 {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+.customer-login-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fa3079;
+  background: #321a23;
 }
 .customer-field {
   display: flex;
@@ -977,10 +1003,10 @@
 }
 @media (min-width: 1450px) {
   .salon-hero-content {
-    left: max(36px, calc((100vw - 1328px) /2));
+    left: max(36px, calc((100vw - 1328px) / 2));
   }
   .customer-tabs {
-    padding-left: max(24px, calc((100vw - 1352px) /2));
+    padding-left: max(24px, calc((100vw - 1352px) / 2));
   }
 }
 @media (max-width: 1000px) {
@@ -1078,7 +1104,7 @@
     padding: 0 6px;
     overflow: auto;
   }
-  .customer-tabs [data-slot='tabs-trigger'] {
+  .customer-tabs [data-slot="tabs-trigger"] {
     font-size: 13px;
     padding: 0 11px;
   }
@@ -1185,16 +1211,16 @@
   color: white;
   resize: vertical;
 }
-.account-tabs [data-slot='tabs-list'] {
+.account-tabs [data-slot="tabs-list"] {
   background: #29241f;
   padding: 4px;
   margin-bottom: 22px;
 }
-.account-tabs [data-slot='tabs-trigger'] {
+.account-tabs [data-slot="tabs-trigger"] {
   font-size: 13px;
   padding: 7px 16px;
 }
-.account-tabs [data-slot='tabs-trigger'][data-active] {
+.account-tabs [data-slot="tabs-trigger"][data-active] {
   background: #453b34;
   color: white;
 }

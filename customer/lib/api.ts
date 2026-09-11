@@ -1,94 +1,139 @@
-import axios from 'axios';
-import { customers, services, staff, appointments } from './demo-data';
-import type { Customer, Service, Staff, Appointment } from './demo-data';
+import axios from "axios";
+import type { Appointment, Service, Staff } from "./demo-data";
+import type {
+  Contact,
+  OwnedBooking,
+  ReserveInput,
+} from "../components/provider";
+import type { CustomerReview, SalonId } from "./customer-data";
+
 export type Reward = {
   id: string;
+  salonId: SalonId;
   name: string;
   points: number;
-  description: string;
+  description: string | null;
   active: boolean;
 };
-export type WorkspaceData = {
-  customers: Customer[];
+export type SalonCatalog = {
+  id: string;
+  slug: SalonId;
+  name: string;
+  tagline: string | null;
+  description: string | null;
+  address: string | null;
+  phone: string | null;
+  imageUrl: string | null;
+  amenities: string[];
+  timezone: string;
+  currency: string;
   services: Service[];
   staff: Staff[];
-  appointments: Appointment[];
+  reviews: CustomerReview[];
   rewards: Reward[];
-  settings: {
-    name: string;
-    email: string;
-    phone: string;
-    address: string;
-    currency: string;
-    timezone: string;
-    confirmation: boolean;
-    reminders: boolean;
-    loyalty: boolean;
-    pointsPerDollar: number;
-    plan: string;
-  };
 };
-export const initialData: WorkspaceData = {
-  customers,
-  services,
-  staff,
-  appointments,
-  rewards: [
-    {
-      id: 'r1',
-      name: '$10 off your next visit',
-      points: 500,
-      description: 'A little thank you for coming back.',
-      active: true,
-    },
-    {
-      id: 'r2',
-      name: 'Complimentary gel manicure',
-      points: 1500,
-      description: 'A finishing touch, on us.',
-      active: true,
-    },
-    {
-      id: 'r3',
-      name: 'Signature facial experience',
-      points: 2500,
-      description: 'An hour of well-deserved self-care.',
-      active: true,
-    },
-  ],
-  settings: {
-    name: 'Serenity Spa & Salon',
-    email: 'hello@serenity.com',
-    phone: '+95 9 250 111 000',
-    address: '42 Inya Road, Kamayut, Yangon',
-    currency: 'USD',
-    timezone: 'Asia/Yangon',
-    confirmation: true,
-    reminders: true,
-    loyalty: true,
-    pointsPerDollar: 4,
-    plan: 'Pro',
-  },
+export type CustomerAccount = {
+  profile: Contact;
+  points: number;
+  rewards: Reward[];
+  owned: Array<OwnedBooking & { appointment: Appointment }>;
 };
-// UI-only adapter. Replace this adapter with the authenticated NestJS API integration.
-// Tenant isolation must be enforced by the backend; this demo is not an auth boundary.
-let demoData = structuredClone(initialData);
+export type SalonSummary = {
+  slug: SalonId;
+  name: string;
+  tagline: string | null;
+  address: string | null;
+  city: string | null;
+  imageUrl: string | null;
+  reviewCount: number;
+  serviceCount: number;
+  rating: number | null;
+};
+
 export const api = axios.create({
-  baseURL: '/api/tenants/serenity',
-  adapter: async (config) => {
-    if (config.method === 'put')
-      demoData = JSON.parse(config.data) as WorkspaceData;
-    return {
-      data: structuredClone(demoData),
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      config,
-    };
-  },
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4010/api",
+  withCredentials: true,
 });
-export const workspaceKey = ['tenant', 'serenity', 'workspace'] as const;
-export const getWorkspace = async () =>
-  (await api.get<WorkspaceData>('/workspace')).data;
-export const saveWorkspace = async (data: WorkspaceData) =>
-  (await api.put<WorkspaceData>('/workspace', data)).data;
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+};
+export async function login(email: string, password: string) {
+  return (
+    await api.post<{ user: SessionUser }>("/auth/login", { email, password })
+  ).data.user;
+}
+export async function logout() {
+  await api.post("/auth/logout");
+}
+export async function getSession() {
+  try {
+    return (await api.get<SessionUser>("/auth/me")).data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401)
+      return null;
+    throw error;
+  }
+}
+export const getSalon = async (slug: SalonId) =>
+  (await api.get<SalonCatalog>(`/public/salons/${slug}`)).data;
+export const getSalons = async () =>
+  (await api.get<SalonSummary[]>("/public/salons")).data;
+export const getAccount = async () => {
+  return (await api.get<CustomerAccount>("/customer/me")).data;
+};
+export const getAvailability = async (
+  slug: SalonId,
+  date: string,
+  serviceId: string,
+  staffId: string,
+) =>
+  (
+    await api.get<Array<{ time: string; staffIds: string[] }>>(
+      `/public/salons/${slug}/availability`,
+      { params: { date, serviceId, staffId } },
+    )
+  ).data;
+const bookingBody = (input: ReserveInput) => ({
+  serviceId: input.serviceId,
+  staffId: input.staffId,
+  date: input.date,
+  time: input.time,
+  customerName: input.name,
+  customerEmail: input.email,
+  customerPhone: input.phone,
+  notes: input.notes,
+});
+export async function reserveBooking(input: ReserveInput) {
+  const url = `/public/salons/${input.salonId}/bookings${input.editingId ? `/${input.editingId}` : ""}`;
+  return (
+    await api.request({
+      url,
+      method: input.editingId ? "patch" : "post",
+      data: bookingBody(input),
+    })
+  ).data;
+}
+export async function cancelBooking(id: string) {
+  return (await api.post(`/customer/bookings/${id}/cancel`)).data;
+}
+export async function updateProfile(profile: Contact) {
+  return (await api.patch<Contact>("/customer/profile", profile)).data;
+}
+export async function createReview(
+  appointmentId: string,
+  rating: number,
+  text: string,
+) {
+  return (await api.post("/customer/reviews", { appointmentId, rating, text }))
+    .data;
+}
+export function apiError(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message;
+    return Array.isArray(message) ? message.join(". ") : message || fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
