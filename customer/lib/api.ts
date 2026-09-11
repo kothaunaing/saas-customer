@@ -14,6 +14,7 @@ export type Reward = {
   points: number;
   description: string | null;
   active: boolean;
+  balance: number;
 };
 export type SalonCatalog = {
   id: string;

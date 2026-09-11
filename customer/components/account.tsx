@@ -345,11 +345,11 @@ export default function AccountPage() {
                   <p>{reward.points.toLocaleString()} points</p>
                   <button
                     className="customer-btn full"
-                    disabled={points < reward.points}
+                    disabled={reward.balance < reward.points}
                   >
-                    {points >= reward.points
+                    {reward.balance >= reward.points
                       ? "Redeem at the salon"
-                      : `${(reward.points - points).toLocaleString()} more points`}
+                      : `${(reward.points - reward.balance).toLocaleString()} more points`}
                   </button>
                 </article>
               ))}
