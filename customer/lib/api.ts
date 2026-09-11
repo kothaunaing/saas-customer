@@ -57,7 +57,8 @@ export type SalonSummary = {
 };
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "/api",
+  // Keep cookies on this app's origin for both API and protected page requests.
+  baseURL: "/api",
   withCredentials: true,
   headers: {
     "x-serenity-portal": "customer",
@@ -82,11 +83,7 @@ export async function getSession() {
     return (await api.get<SessionUser>("/auth/me")).data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      try {
-        await logout();
-      } catch {
-        // ignore
-      }
+      // A session check must not clear cookies from a concurrent login.
       return null;
     }
     throw error;
