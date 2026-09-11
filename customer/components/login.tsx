@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { LockKeyhole } from "lucide-react";
+import { motion } from "framer-motion";
 import { apiError, login, logout } from "@/customer/lib/api";
+import { pageVariants, sectionVariants, itemVariants } from "@/customer/lib/motion";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,7 +26,15 @@ export default function LoginPage() {
       const user = await login(email.trim().toLowerCase(), password);
       if (user.role !== "CUSTOMER") {
         await logout();
-        throw new Error("Please use a customer account to sign in here.");
+        const portalHint =
+          user.role === "TENANT_ADMIN"
+            ? " Use the Salon Dashboard (localhost:3000) to manage your workspace."
+            : user.role === "PLATFORM_ADMIN"
+              ? " Use the Super Admin Console (localhost:3002) to manage the platform."
+              : "";
+        throw new Error(
+          `This portal is for customers only.${portalHint}`,
+        );
       }
       await queryClient.invalidateQueries({ queryKey: ["customer-session"] });
       await queryClient.invalidateQueries({ queryKey: ["customer-account"] });
@@ -38,18 +48,29 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="customer-container customer-login">
-      <section className="customer-panel customer-login-card">
-        <span className="customer-login-icon">
+    <motion.main
+      className="customer-container customer-login"
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.section
+        className="customer-panel customer-login-card"
+        variants={sectionVariants}
+      >
+        <motion.span
+          className="customer-login-icon"
+          variants={itemVariants}
+        >
           <LockKeyhole />
-        </span>
-        <div>
+        </motion.span>
+        <motion.div variants={itemVariants}>
           <h1>Welcome back</h1>
           <p className="customer-lead">
             Sign in to manage your bookings and rewards.
           </p>
-        </div>
-        <form onSubmit={submit}>
+        </motion.div>
+        <motion.form variants={itemVariants} onSubmit={submit}>
           <label className="customer-field">
             Email
             <input
@@ -71,18 +92,26 @@ export default function LoginPage() {
             />
           </label>
           {error && (
-            <p className="customer-error" role="alert">
+            <motion.p
+              className="customer-error"
+              role="alert"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
               {error}
-            </p>
+            </motion.p>
           )}
           <button className="customer-btn primary full" disabled={saving}>
             {saving ? "Signing in…" : "Sign in"}
           </button>
-        </form>
-        <Link href="/" className="customer-back-link">
-          Continue browsing salons
-        </Link>
-      </section>
-    </main>
+        </motion.form>
+        <motion.div variants={itemVariants}>
+          <Link href="/" className="customer-back-link">
+            Continue browsing salons
+          </Link>
+        </motion.div>
+      </motion.section>
+    </motion.main>
   );
 }

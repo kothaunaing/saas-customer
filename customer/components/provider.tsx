@@ -8,23 +8,19 @@ import {
   getAccount,
   getSession,
   getSalon,
+  getSalons,
   reserveBooking,
   updateProfile,
   type Reward,
+  type SalonCatalog,
 } from "@/customer/lib/api";
-import {
-  salonIds,
-  type SalonId,
-  type CustomerReview,
-} from "@/customer/lib/customer-data";
-import {
-  appointments,
-  services,
-  staff,
-  type Appointment,
-  type Service,
-  type Staff,
-} from "@/customer/lib/demo-data";
+import type {
+  SalonId,
+  CustomerReview,
+  Appointment,
+  Service,
+  Staff,
+} from "@/customer/lib/domain";
 
 export type Contact = {
   name: string;
@@ -58,6 +54,7 @@ type Catalog = {
   appointments: Appointment[];
   name?: string;
   address?: string | null;
+  phone?: string | null;
   tagline?: string | null;
   description?: string | null;
   amenities?: string[];
@@ -85,12 +82,16 @@ const emptyContact: Contact = { name: "", email: "", phone: "", notes: "" };
 
 export function CustomerProvider({ children }: { children: React.ReactNode }) {
   const client = useQueryClient();
-  const catalogs = useQuery({
+  const catalogs = useQuery<Record<string, SalonCatalog>>({
     queryKey: ["public-salons"],
-    queryFn: async () =>
-      Object.fromEntries(
-        await Promise.all(salonIds.map(async (id) => [id, await getSalon(id)])),
-      ),
+    queryFn: async () => {
+      const salons = await getSalons();
+      return Object.fromEntries(
+        await Promise.all(
+          salons.map(async ({ slug }) => [slug, await getSalon(slug)]),
+        ),
+      );
+    },
   });
   const session = useQuery({
     queryKey: ["customer-session"],
@@ -117,14 +118,13 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         appointments: rows,
         name: remote.name,
         address: remote.address,
+        phone: remote.phone,
         tagline: remote.tagline,
         description: remote.description,
         amenities: remote.amenities,
         imageUrl: remote.imageUrl,
       };
-    return id === "serenity"
-      ? { services, staff, appointments }
-      : { services: [], staff: [], appointments: [] };
+    return { services: [], staff: [], appointments: [] };
   }
   async function refresh() {
     await Promise.all([
@@ -176,7 +176,9 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
       throw new Error(apiError(error, "Your profile could not be saved."));
     }
   }
-  const reviews = salonIds.flatMap((id) => catalogs.data?.[id]?.reviews ?? []);
+  const reviews = Object.values(catalogs.data ?? {}).flatMap(
+    (catalog) => catalog.reviews ?? [],
+  );
   const owned = (account.data?.owned ?? []).map(
     ({ appointment: _appointment, ...row }) => row,
   );

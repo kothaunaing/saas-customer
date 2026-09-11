@@ -1,11 +1,16 @@
 import axios from "axios";
-import type { Appointment, Service, Staff } from "./demo-data";
+import type {
+  Appointment,
+  Service,
+  Staff,
+  CustomerReview,
+  SalonId,
+} from "./domain";
 import type {
   Contact,
   OwnedBooking,
   ReserveInput,
 } from "../components/provider";
-import type { CustomerReview, SalonId } from "./customer-data";
 
 export type Reward = {
   id: string;
@@ -54,6 +59,9 @@ export type SalonSummary = {
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4010/api",
   withCredentials: true,
+  headers: {
+    "x-serenity-portal": "customer",
+  },
 });
 export type SessionUser = {
   id: string;
@@ -129,6 +137,23 @@ export async function createReview(
   text: string,
 ) {
   return (await api.post("/customer/reviews", { appointmentId, rating, text }))
+    .data;
+}
+export type CustomerNotification = {
+  id: string;
+  kind: string;
+  channel: string;
+  status: string;
+  scheduledFor: string;
+  sentAt: string | null;
+  appointment: {
+    startsAt: string;
+    service: { name: string };
+    tenant: { name: string; slug: string };
+  };
+};
+export async function getCustomerNotifications() {
+  return (await api.get<CustomerNotification[]>("/customer/notifications"))
     .data;
 }
 export function apiError(error: unknown, fallback: string) {

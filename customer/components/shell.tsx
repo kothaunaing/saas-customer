@@ -14,9 +14,12 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { motion } from "framer-motion";
 import { useCustomer } from "./provider";
-import { initials } from "@/customer/lib/demo-data";
+import { initials } from "@/customer/lib/domain";
 import { logout } from "@/customer/lib/api";
+import { ease } from "@/customer/lib/motion";
+
 export default function CustomerShell({
   children,
 }: {
@@ -34,13 +37,18 @@ export default function CustomerShell({
   }
   return (
     <div className="customer-app dark">
-      <header className="customer-header">
+      <motion.header
+        className="customer-header"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease }}
+      >
         <Link href="/" className="customer-brand">
           Serenity Booking
           <span className="customer-brand-dot" />
         </Link>
         <div className="customer-header-right">
-          <span className="customer-demo">Online booking</span>
+          <span className="customer-mode">Online booking</span>
           <Link
             className="customer-my-bookings"
             href={customer.authenticated ? "/account" : "/login?next=/account"}
@@ -91,9 +99,14 @@ export default function CustomerShell({
             </Link>
           )}
         </div>
-      </header>
+      </motion.header>
       {children}
-      <footer className="customer-footer">
+      <motion.footer
+        className="customer-footer"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease, delay: 0.3 }}
+      >
         <span>Serenity Booking · A little time for you.</span>
         <span>Secure online appointments</span>
         {path !== "/" && (
@@ -102,7 +115,7 @@ export default function CustomerShell({
             <ArrowUpRight size={13} />
           </Link>
         )}
-      </footer>
+      </motion.footer>
     </div>
   );
 }

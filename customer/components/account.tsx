@@ -12,6 +12,7 @@ import {
   Pencil,
   Star,
   UserRound,
+  Bell,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -24,16 +25,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion, AnimatePresence } from "framer-motion";
 import { canCustomerManage } from "@/customer/lib/booking";
-import {
-  CUSTOMER_DEMO_NOW,
-  dateLabel,
-  salons,
-  timeLabel,
-} from "@/customer/lib/customer-data";
-import { duration } from "@/customer/lib/demo-data";
+import { dateLabel, timeLabel } from "@/customer/lib/domain";
+import { duration } from "@/customer/lib/domain";
 import type { Reward } from "@/customer/lib/api";
+import { getCustomerNotifications } from "@/customer/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { useCustomer, type Contact, type OwnedBooking } from "./provider";
+import {
+  pageVariants,
+  sectionVariants,
+  listVariants,
+  itemVariants,
+  bannerVariants,
+  fadeVariants,
+} from "@/customer/lib/motion";
 
 export default function AccountPage() {
   const customer = useCustomer();
@@ -41,7 +48,8 @@ export default function AccountPage() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
-    tabParam && ["bookings", "rewards", "profile"].includes(tabParam)
+    tabParam &&
+      ["bookings", "rewards", "notifications", "profile"].includes(tabParam)
       ? tabParam
       : "bookings",
   );
@@ -56,22 +64,45 @@ export default function AccountPage() {
   const [dialogError, setDialogError] = useState("");
   const [saving, setSaving] = useState(false);
   const points = customer.points;
+  const notifications = useQuery({
+    queryKey: ["customer-notifications"],
+    queryFn: getCustomerNotifications,
+    enabled: customer.authenticated,
+  });
   useEffect(() => setProfile(customer.profile), [customer.profile]);
   useEffect(() => {
-    if (tabParam && ["bookings", "rewards", "profile"].includes(tabParam)) {
+    if (
+      tabParam &&
+      ["bookings", "rewards", "notifications", "profile"].includes(tabParam)
+    ) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
 
   if (customer.loading) {
     return (
-      <main className="customer-container narrow">Loading your account…</main>
+      <motion.main
+        className="customer-container narrow"
+        variants={fadeVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        Loading your account…
+      </motion.main>
     );
   }
   if (!customer.authenticated) {
     return (
-      <main className="customer-container customer-login">
-        <section className="customer-panel customer-login-card">
+      <motion.main
+        className="customer-container customer-login"
+        variants={pageVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.section
+          className="customer-panel customer-login-card"
+          variants={sectionVariants}
+        >
           <h1>Sign in to your account</h1>
           <p className="customer-lead">
             View appointments, rewards, and profile details securely.
@@ -82,8 +113,8 @@ export default function AccountPage() {
           >
             Sign in
           </Link>
-        </section>
-      </main>
+        </motion.section>
+      </motion.main>
     );
   }
 
@@ -122,7 +153,10 @@ export default function AccountPage() {
 
   function reschedule(owned: OwnedBooking) {
     const appointment = details(owned).appointment;
-    if (!appointment || !canCustomerManage(appointment, CUSTOMER_DEMO_NOW))
+    if (
+      !appointment ||
+      !canCustomerManage(appointment, new Date().toISOString())
+    )
       return;
     customer.setDraft({
       salonId: owned.salonId,
@@ -193,20 +227,22 @@ export default function AccountPage() {
     const appointment = record.appointment!;
     const service = record.service!;
     const staff = record.staff!;
-    const manageable = canCustomerManage(appointment, CUSTOMER_DEMO_NOW);
+    const manageable = canCustomerManage(appointment, new Date().toISOString());
     const reviewed = customer.reviews.some(
       (item) =>
         item.bookingId === appointment.id &&
         item.salonId === record.owned.salonId,
     );
     return (
-      <article className="customer-panel account-booking">
+      <motion.article
+        className="customer-panel account-booking"
+        variants={itemVariants}
+        layout
+      >
         <div className="customer-between">
           <div>
             <h3>{service.name}</h3>
-            <p className="customer-lead mt-1!">
-              {salons[record.owned.salonId].name}
-            </p>
+            <p className="customer-lead mt-1!">{record.source.name}</p>
           </div>
           <span
             className={`customer-status ${appointment.status === "Cancelled" ? "cancelled" : ""}`}
@@ -230,7 +266,7 @@ export default function AccountPage() {
         </div>
         <div className="booking-card-line">
           <MapPin />
-          {salons[record.owned.salonId].address}
+          {record.source.address}
         </div>
         <div className="customer-actions">
           {manageable && (
@@ -275,181 +311,303 @@ export default function AccountPage() {
             View salon
           </Link>
         </div>
-      </article>
+      </motion.article>
     );
   }
 
   return (
-    <main className="customer-container narrow">
-      <div className="account-heading">
-        <h1>My Serenity</h1>
+    <motion.main
+      className="customer-container narrow"
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div className="account-heading" variants={sectionVariants}>
+        <h1>My account</h1>
         <p>Your bookings, rewards, and details in one quiet place.</p>
-      </div>
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="account-tabs"
-      >
-        <TabsList>
-          <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="rewards">Rewards</TabsTrigger>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-        </TabsList>
-        <TabsContent value="bookings">
-          <section className="customer-account-section">
-            <div className="customer-between">
-              <h2>Upcoming</h2>
-              <Link className="customer-btn primary" href="/">
-                Book something new
-              </Link>
-            </div>
-            <div className="customer-account-list">
-              {upcoming.length ? (
-                upcoming.map((record) => (
-                  <BookingCard
-                    key={`${record.owned.salonId}-${record.owned.appointmentId}`}
-                    record={record}
-                  />
-                ))
-              ) : (
-                <div className="customer-panel customer-empty">
-                  <CalendarDays size={28} />
-                  <h3>Your calendar is clear</h3>
-                  <p>Choose a salon and find your next moment of care.</p>
-                </div>
-              )}
-            </div>
-          </section>
-          <section className="customer-account-section mt-10">
-            <h2>Past visits</h2>
-            <div className="customer-account-list">
-              {past.length ? (
-                past.map((record) => (
-                  <BookingCard
-                    key={`${record.owned.salonId}-${record.owned.appointmentId}`}
-                    record={record}
-                  />
-                ))
-              ) : (
-                <div className="customer-panel customer-empty">
-                  No past visits yet.
-                </div>
-              )}
-            </div>
-          </section>
-        </TabsContent>
-        <TabsContent value="rewards">
-          <section id="rewards" className="customer-account-section">
-            <div className="customer-panel">
-              <div className="customer-between">
-                <div>
-                  <h2>Serenity points</h2>
-                  <p className="customer-lead">
-                    A little thank you for every visit.
-                  </p>
-                </div>
-                <div>
-                  <div className="customer-points">
-                    {points.toLocaleString()}
-                  </div>
-                  <small className="muted">points available</small>
-                </div>
-              </div>
-            </div>
-            <div className="account-reward-grid">
-              {customer.rewards.map((reward) => (
-                <article className="customer-panel" key={reward.name}>
-                  <Gift className="pink" />
-                  <h3>{reward.name}</h3>
-                  <p>{reward.points.toLocaleString()} points</p>
-                  <button
-                    type="button"
-                    className="customer-btn full"
-                    disabled={reward.balance < reward.points}
-                    onClick={() => {
-                      setRedeemReward(reward);
-                      setCopied(false);
-                    }}
+      </motion.div>
+      <motion.div variants={sectionVariants}>
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="account-tabs"
+        >
+          <TabsList>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="rewards">Rewards</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
+
+          <AnimatePresence mode="wait">
+            {activeTab === "bookings" && (
+              <TabsContent value="bookings" key="bookings">
+                <motion.div
+                  key="bookings-content"
+                  variants={fadeVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <section className="customer-account-section">
+                    <div className="customer-between">
+                      <h2>Upcoming</h2>
+                      <Link className="customer-btn primary" href="/">
+                        Book something new
+                      </Link>
+                    </div>
+                    <motion.div
+                      className="customer-account-list"
+                      variants={listVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {upcoming.length ? (
+                        upcoming.map((record) => (
+                          <BookingCard
+                            key={`${record.owned.salonId}-${record.owned.appointmentId}`}
+                            record={record}
+                          />
+                        ))
+                      ) : (
+                        <motion.div
+                          className="customer-panel customer-empty"
+                          variants={itemVariants}
+                        >
+                          <CalendarDays size={28} />
+                          <h3>Your calendar is clear</h3>
+                          <p>Choose a salon and find your next moment of care.</p>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  </section>
+                  <section className="customer-account-section mt-10">
+                    <h2>Past visits</h2>
+                    <motion.div
+                      className="customer-account-list"
+                      variants={listVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {past.length ? (
+                        past.map((record) => (
+                          <BookingCard
+                            key={`${record.owned.salonId}-${record.owned.appointmentId}`}
+                            record={record}
+                          />
+                        ))
+                      ) : (
+                        <motion.div
+                          className="customer-panel customer-empty"
+                          variants={itemVariants}
+                        >
+                          No past visits yet.
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  </section>
+                </motion.div>
+              </TabsContent>
+            )}
+
+            {activeTab === "rewards" && (
+              <TabsContent value="rewards" key="rewards">
+                <motion.section
+                  key="rewards-content"
+                  id="rewards"
+                  className="customer-account-section"
+                  variants={pageVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <motion.div className="customer-panel" variants={itemVariants}>
+                    <div className="customer-between">
+                      <div>
+                        <h2>Loyalty points</h2>
+                        <p className="customer-lead">
+                          A little thank you for every visit.
+                        </p>
+                      </div>
+                      <div>
+                        <div className="customer-points">
+                          {points.toLocaleString()}
+                        </div>
+                        <small className="muted">points available</small>
+                      </div>
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    className="account-reward-grid"
+                    variants={listVariants}
+                    initial="hidden"
+                    animate="visible"
                   >
-                    {reward.balance >= reward.points
-                      ? "Redeem at the salon"
-                      : `${(reward.points - reward.balance).toLocaleString()} more points`}
-                  </button>
-                </article>
-              ))}
-            </div>
-            <p className="customer-profile-note">
-              Rewards are redeemed with the salon during your visit.
-            </p>
-          </section>
-        </TabsContent>
-        <TabsContent value="profile">
-          <section
-            id="profile"
-            className="customer-account-section customer-account-grid"
-          >
-            <form
-              className="customer-panel customer-profile-form"
-              onSubmit={saveProfile}
-            >
-              <div>
-                <h2>Your details</h2>
-                <p className="customer-lead">
-                  Used to prefill your next booking.
-                </p>
-              </div>
-              <label className="customer-field">
-                Full name
-                <input
-                  value={profile.name}
-                  onChange={(event) =>
-                    setProfile({ ...profile, name: event.target.value })
-                  }
-                />
-              </label>
-              <label className="customer-field">
-                Email
-                <input
-                  type="email"
-                  value={profile.email}
-                  onChange={(event) =>
-                    setProfile({ ...profile, email: event.target.value })
-                  }
-                />
-              </label>
-              <label className="customer-field">
-                Phone
-                <input
-                  type="tel"
-                  value={profile.phone}
-                  onChange={(event) =>
-                    setProfile({ ...profile, phone: event.target.value })
-                  }
-                />
-              </label>
-              {profileError && (
-                <p className="customer-error" role="alert">
-                  {profileError}
-                </p>
-              )}
-              <button className="customer-btn primary" disabled={saving}>
-                {saving ? "Saving…" : "Save profile"}
-              </button>
-            </form>
-            <aside className="customer-panel">
-              <h2>Your customer account</h2>
-              <p>
-                Your bookings, profile, reviews, and reward balance are loaded
-                securely from the booking service.
-              </p>
-              <div className="booking-divider" />
-              <p>
-                Contact the salon if you need help within 24 hours of a visit.
-              </p>
-            </aside>
-          </section>
-        </TabsContent>
-      </Tabs>
+                    {customer.rewards.map((reward) => (
+                      <motion.article
+                        className="customer-panel"
+                        key={reward.name}
+                        variants={itemVariants}
+                        whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                      >
+                        <Gift className="pink" />
+                        <h3>{reward.name}</h3>
+                        <p>{reward.points.toLocaleString()} points</p>
+                        <button
+                          type="button"
+                          className="customer-btn full"
+                          disabled={reward.balance < reward.points}
+                          onClick={() => {
+                            setRedeemReward(reward);
+                            setCopied(false);
+                          }}
+                        >
+                          {reward.balance >= reward.points
+                            ? "Redeem at the salon"
+                            : `${(reward.points - reward.balance).toLocaleString()} more points`}
+                        </button>
+                      </motion.article>
+                    ))}
+                  </motion.div>
+                  <p className="customer-profile-note">
+                    Rewards are redeemed with the salon during your visit.
+                  </p>
+                </motion.section>
+              </TabsContent>
+            )}
+
+            {activeTab === "notifications" && (
+              <TabsContent value="notifications" key="notifications">
+                <motion.section
+                  key="notifications-content"
+                  className="customer-panel"
+                  variants={pageVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <h2>Notifications</h2>
+                  {notifications.isLoading && <p>Loading notifications…</p>}
+                  {notifications.isError && (
+                    <p>Notifications could not be loaded.</p>
+                  )}
+                  <motion.div
+                    variants={listVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {notifications.data?.map((item) => (
+                      <motion.article
+                        className="account-booking"
+                        key={item.id}
+                        variants={itemVariants}
+                      >
+                        <div className="customer-between">
+                          <strong>{item.kind.replaceAll("_", " ")}</strong>
+                          <span className="customer-status">{item.status}</span>
+                        </div>
+                        <div className="customer-meta">
+                          <span>
+                            <Bell size={15} />
+                            {item.channel}
+                          </span>
+                          <span>{item.appointment.tenant.name}</span>
+                          <span>{item.appointment.service.name}</span>
+                          <span>{new Date(item.scheduledFor).toLocaleString()}</span>
+                        </div>
+                      </motion.article>
+                    ))}
+                  </motion.div>
+                  {!notifications.isLoading && !notifications.data?.length && (
+                    <p>No notifications yet.</p>
+                  )}
+                </motion.section>
+              </TabsContent>
+            )}
+
+            {activeTab === "profile" && (
+              <TabsContent value="profile" key="profile">
+                <motion.section
+                  key="profile-content"
+                  id="profile"
+                  className="customer-account-section customer-account-grid"
+                  variants={pageVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <motion.form
+                    className="customer-panel customer-profile-form"
+                    onSubmit={saveProfile}
+                    variants={itemVariants}
+                  >
+                    <div>
+                      <h2>Your details</h2>
+                      <p className="customer-lead">
+                        Used to prefill your next booking.
+                      </p>
+                    </div>
+                    <label className="customer-field">
+                      Full name
+                      <input
+                        value={profile.name}
+                        onChange={(event) =>
+                          setProfile({ ...profile, name: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="customer-field">
+                      Email
+                      <input
+                        type="email"
+                        value={profile.email}
+                        onChange={(event) =>
+                          setProfile({ ...profile, email: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="customer-field">
+                      Phone
+                      <input
+                        type="tel"
+                        value={profile.phone}
+                        onChange={(event) =>
+                          setProfile({ ...profile, phone: event.target.value })
+                        }
+                      />
+                    </label>
+                    {profileError && (
+                      <motion.p
+                        className="customer-error"
+                        role="alert"
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        {profileError}
+                      </motion.p>
+                    )}
+                    <button className="customer-btn primary" disabled={saving}>
+                      {saving ? "Saving…" : "Save profile"}
+                    </button>
+                  </motion.form>
+                  <motion.aside className="customer-panel" variants={itemVariants}>
+                    <h2>Your customer account</h2>
+                    <p>
+                      Your bookings, profile, reviews, and reward balance are loaded
+                      securely from the booking service.
+                    </p>
+                    <div className="booking-divider" />
+                    <p>
+                      Contact the salon if you need help within 24 hours of a visit.
+                    </p>
+                  </motion.aside>
+                </motion.section>
+              </TabsContent>
+            )}
+          </AnimatePresence>
+        </Tabs>
+      </motion.div>
 
       <AlertDialog
         open={!!cancelTarget}
@@ -490,7 +648,7 @@ export default function AccountPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>How was your visit?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your review will appear on the salon’s Reviews tab session.
+              Your review will appear on the salon&apos;s Reviews tab session.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="review-stars-input" aria-label="Rating">
@@ -541,11 +699,12 @@ export default function AccountPage() {
               Redeem {redeemReward?.name}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Use your accumulated Serenity points for this reward during your salon visit.
+              Use your accumulated loyalty points for this reward during your
+              salon visit.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div
+          <motion.div
             style={{
               background: "#1c1917",
               border: "1px solid #332d29",
@@ -554,6 +713,9 @@ export default function AccountPage() {
               margin: "14px 0",
               textAlign: "center",
             }}
+            variants={bannerVariants}
+            initial="hidden"
+            animate="visible"
           >
             <span
               style={{
@@ -575,7 +737,12 @@ export default function AccountPage() {
                 fontFamily: "monospace",
               }}
             >
-              {`SERENITY-${redeemReward?.points ?? 100}PTS-${redeemReward?.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() || "PASS"}`}
+              {`SERENITY-${redeemReward?.points ?? 100}PTS-${
+                redeemReward?.id
+                  .replace(/[^a-zA-Z0-9]/g, "")
+                  .slice(0, 6)
+                  .toUpperCase() || "PASS"
+              }`}
             </div>
             <p
               style={{
@@ -584,15 +751,25 @@ export default function AccountPage() {
                 margin: "4px 0 12px",
               }}
             >
-              Present this code at reception during checkout. {redeemReward?.points}{" "}
-              points will be deducted from your visit bill.
+              Present this code at reception during checkout.{" "}
+              {redeemReward?.points} points will be deducted from your visit
+              bill.
             </p>
             <button
               type="button"
               className="customer-btn"
-              style={{ margin: "0 auto", fontSize: "12px", padding: "6px 14px" }}
+              style={{
+                margin: "0 auto",
+                fontSize: "12px",
+                padding: "6px 14px",
+              }}
               onClick={() => {
-                const code = `SERENITY-${redeemReward?.points ?? 100}PTS-${redeemReward?.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() || "PASS"}`;
+                const code = `SERENITY-${redeemReward?.points ?? 100}PTS-${
+                  redeemReward?.id
+                    .replace(/[^a-zA-Z0-9]/g, "")
+                    .slice(0, 6)
+                    .toUpperCase() || "PASS"
+                }`;
                 void navigator.clipboard.writeText(code);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 3000);
@@ -600,12 +777,10 @@ export default function AccountPage() {
             >
               {copied ? "✓ Code Copied to Clipboard!" : "Copy Voucher Code"}
             </button>
-          </div>
+          </motion.div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel className="customer-btn">
-              Done
-            </AlertDialogCancel>
+            <AlertDialogCancel className="customer-btn">Done</AlertDialogCancel>
             <AlertDialogAction
               className="customer-btn primary"
               onClick={() => {
@@ -618,7 +793,6 @@ export default function AccountPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
-
+    </motion.main>
   );
 }

@@ -1,11 +1,5 @@
-import BookingFlow from '@/customer/components/booking-flow';
-import { salonIds, type SalonId } from '@/customer/lib/customer-data';
-
-export function generateStaticParams() {
-  return salonIds.map((salon) => ({ salon }));
-}
-
-export const dynamicParams = false;
+import BookingFlow from "@/customer/components/booking-flow";
+import type { SalonId } from "@/customer/lib/domain";
 
 export default async function Page({
   params,

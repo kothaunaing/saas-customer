@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -321,7 +321,7 @@ svg {
   gap: 16px;
   font-size: 12px;
 }
-.demo-badge {
+.mode-badge {
   background: #f7f7f8;
   color: #898991;
   border: 1px solid #ededf0;
@@ -725,7 +725,7 @@ svg {
   border-radius: 4px;
   color: #82828c;
 }
-.tabs-compact button[data-active='true'] {
+.tabs-compact button[data-active="true"] {
   background: #f4f4f6;
   color: #2e2e36;
   font-weight: 600;
@@ -1200,7 +1200,7 @@ svg {
   .topbar {
     padding: 0 23px;
   }
-  .topbar-right .demo-badge {
+  .topbar-right .mode-badge {
     display: none;
   }
 }
@@ -1337,23 +1337,23 @@ svg {
   margin-left: 12px;
   color: #999;
 }
-.data-table [data-slot='table-row'] {
+.data-table [data-slot="table-row"] {
   height: auto;
 }
-.data-table [data-slot='table-head'] {
+.data-table [data-slot="table-head"] {
   height: 44px;
 }
-.data-table [data-slot='table-cell'] {
+.data-table [data-slot="table-cell"] {
   padding: 16px 19px;
 }
-.field [data-slot='select-trigger'] {
+.field [data-slot="select-trigger"] {
   font-size: 12px;
   min-height: 37px;
 }
-.page [data-slot='progress-track'] {
+.page [data-slot="progress-track"] {
   height: 6px;
 }
-.page [data-slot='progress-indicator'] {
+.page [data-slot="progress-indicator"] {
   border-radius: 6px;
 }
 button:focus-visible,
