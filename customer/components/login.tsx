@@ -37,9 +37,9 @@ export default function LoginPage() {
         await logout();
         const portalHint =
           user.role === "TENANT_ADMIN"
-            ? " Use the Salon Dashboard (localhost:3000) to manage your workspace."
+            ? " Use the Salon Dashboard (https://saas-tenant-iota.vercel.app) to manage your workspace."
             : user.role === "PLATFORM_ADMIN"
-              ? " Use the Super Admin Console (localhost:3002) to manage the platform."
+              ? " Use the Super Admin Console (https://saas-provider-opal.vercel.app) to manage the platform."
               : "";
         throw new Error(
           `This portal is for customers only.${portalHint}`,
