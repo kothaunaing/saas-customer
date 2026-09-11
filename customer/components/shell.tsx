@@ -35,7 +35,7 @@ export default function CustomerShell({
   return (
     <div className="customer-app dark">
       <header className="customer-header">
-        <Link href="" className="customer-brand">
+        <Link href="/" className="customer-brand">
           Serenity Booking
           <span className="customer-brand-dot" />
         </Link>
@@ -59,22 +59,26 @@ export default function CustomerShell({
               <PopoverContent align="end" className="customer-menu dark">
                 <strong>{customer.profile.name || "Customer"}</strong>
                 <p>Customer account</p>
-                <Link href="/account">
+                <Link href="/account?tab=bookings">
                   <CalendarDays size={15} />
                   My bookings
                 </Link>
-                <Link href="/account">
+                <Link href="/account?tab=rewards">
                   <Gift size={15} />
                   My rewards
                 </Link>
-                <Link href="/account">
+                <Link href="/account?tab=profile">
                   <UserRound size={15} />
                   My profile
                 </Link>
-                <Link href="/">
+                <a
+                  href="http://localhost:3000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <ArrowUpRight size={15} />
                   Tenant workspace
-                </Link>
+                </a>
                 <button type="button" onClick={signOut}>
                   <LogOut size={15} />
                   Sign out
@@ -92,8 +96,8 @@ export default function CustomerShell({
       <footer className="customer-footer">
         <span>Serenity Booking · A little time for you.</span>
         <span>Secure online appointments</span>
-        {path !== "" && (
-          <Link href="">
+        {path !== "/" && (
+          <Link href="/">
             Explore salons
             <ArrowUpRight size={13} />
           </Link>

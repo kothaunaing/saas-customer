@@ -352,7 +352,7 @@ export default function SalonPage({ salonId }: { salonId: SalonId }) {
         </TabsContent>
       </Tabs>
       <div className="customer-container py-0! pb-7!">
-        <Link href="" className="customer-back-link">
+        <Link href="/" className="customer-back-link">
           <ArrowLeft size={14} />
           All salons
         </Link>

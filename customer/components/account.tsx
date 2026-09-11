@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
   Clock3,
@@ -32,13 +32,23 @@ import {
   timeLabel,
 } from "@/customer/lib/customer-data";
 import { duration } from "@/customer/lib/demo-data";
+import type { Reward } from "@/customer/lib/api";
 import { useCustomer, type Contact, type OwnedBooking } from "./provider";
 
 export default function AccountPage() {
   const customer = useCustomer();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    tabParam && ["bookings", "rewards", "profile"].includes(tabParam)
+      ? tabParam
+      : "bookings",
+  );
   const [cancelTarget, setCancelTarget] = useState<OwnedBooking | null>(null);
   const [reviewTarget, setReviewTarget] = useState<OwnedBooking | null>(null);
+  const [redeemReward, setRedeemReward] = useState<Reward | null>(null);
+  const [copied, setCopied] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [profile, setProfile] = useState<Contact>(customer.profile);
@@ -47,6 +57,11 @@ export default function AccountPage() {
   const [saving, setSaving] = useState(false);
   const points = customer.points;
   useEffect(() => setProfile(customer.profile), [customer.profile]);
+  useEffect(() => {
+    if (tabParam && ["bookings", "rewards", "profile"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   if (customer.loading) {
     return (
@@ -270,7 +285,11 @@ export default function AccountPage() {
         <h1>My Serenity</h1>
         <p>Your bookings, rewards, and details in one quiet place.</p>
       </div>
-      <Tabs defaultValue="bookings" className="account-tabs">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="account-tabs"
+      >
         <TabsList>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="rewards">Rewards</TabsTrigger>
@@ -280,7 +299,7 @@ export default function AccountPage() {
           <section className="customer-account-section">
             <div className="customer-between">
               <h2>Upcoming</h2>
-              <Link className="customer-btn primary" href="">
+              <Link className="customer-btn primary" href="/">
                 Book something new
               </Link>
             </div>
@@ -344,8 +363,13 @@ export default function AccountPage() {
                   <h3>{reward.name}</h3>
                   <p>{reward.points.toLocaleString()} points</p>
                   <button
+                    type="button"
                     className="customer-btn full"
                     disabled={reward.balance < reward.points}
+                    onClick={() => {
+                      setRedeemReward(reward);
+                      setCopied(false);
+                    }}
                   >
                     {reward.balance >= reward.points
                       ? "Redeem at the salon"
@@ -505,6 +529,96 @@ export default function AccountPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={!!redeemReward}
+        onOpenChange={(open) => !open && setRedeemReward(null)}
+      >
+        <AlertDialogContent className="customer-dialog dark">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Gift className="text-[#fa3079]" size={20} />
+              Redeem {redeemReward?.name}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Use your accumulated Serenity points for this reward during your salon visit.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div
+            style={{
+              background: "#1c1917",
+              border: "1px solid #332d29",
+              borderRadius: "10px",
+              padding: "16px",
+              margin: "14px 0",
+              textAlign: "center",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "11px",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#a8a29e",
+              }}
+            >
+              Your Redemption Voucher Pass
+            </span>
+            <div
+              style={{
+                fontSize: "20px",
+                fontWeight: "bold",
+                letterSpacing: "0.1em",
+                color: "#fa3079",
+                margin: "8px 0",
+                fontFamily: "monospace",
+              }}
+            >
+              {`SERENITY-${redeemReward?.points ?? 100}PTS-${redeemReward?.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() || "PASS"}`}
+            </div>
+            <p
+              style={{
+                fontSize: "12px",
+                color: "#d6d3d1",
+                margin: "4px 0 12px",
+              }}
+            >
+              Present this code at reception during checkout. {redeemReward?.points}{" "}
+              points will be deducted from your visit bill.
+            </p>
+            <button
+              type="button"
+              className="customer-btn"
+              style={{ margin: "0 auto", fontSize: "12px", padding: "6px 14px" }}
+              onClick={() => {
+                const code = `SERENITY-${redeemReward?.points ?? 100}PTS-${redeemReward?.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() || "PASS"}`;
+                void navigator.clipboard.writeText(code);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 3000);
+              }}
+            >
+              {copied ? "✓ Code Copied to Clipboard!" : "Copy Voucher Code"}
+            </button>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel className="customer-btn">
+              Done
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="customer-btn primary"
+              onClick={() => {
+                setRedeemReward(null);
+                router.push("/");
+              }}
+            >
+              Book an appointment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
+
   );
 }
