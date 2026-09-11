@@ -80,7 +80,7 @@ export default function CustomerShell({
                   My profile
                 </Link>
                 <a
-                  href="http://localhost:3000"
+                  href="https://saas-tenant-iota.vercel.app"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
