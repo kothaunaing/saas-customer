@@ -31,7 +31,6 @@ export type SalonCatalog = {
   phone: string | null;
   imageUrl: string | null;
   amenities: string[];
-  timezone: string;
   currency: string;
   services: Service[];
   staff: Staff[];
@@ -74,6 +73,14 @@ export async function login(email: string, password: string) {
   return (
     await api.post<{ user: SessionUser }>("/auth/login", { email, password })
   ).data.user;
+}
+export async function registerCustomer(input: {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+}) {
+  return (await api.post("/auth/register/customer", input)).data;
 }
 export async function logout() {
   await api.post("/auth/logout");

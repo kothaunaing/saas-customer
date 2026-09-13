@@ -116,9 +116,11 @@ export function availableSlots(
 }
 
 export function canCustomerManage(booking: Appointment, now: string) {
+  const startsAt = booking.startsAt
+    ? Date.parse(booking.startsAt)
+    : Date.parse(`${booking.date}T${booking.time}:00+06:30`);
   return (
     ["Confirmed", "Pending"].includes(booking.status) &&
-    Date.parse(`${booking.date}T${booking.time}:00+06:30`) - Date.parse(now) >=
-      24 * 60 * 60 * 1000
+    startsAt - Date.parse(now) >= 24 * 60 * 60 * 1000
   );
 }

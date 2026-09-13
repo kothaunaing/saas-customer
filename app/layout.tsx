@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import CustomerShell from "@/customer/components/shell";
 import { CustomerProvider } from "@/customer/components/provider";
 import WorkspaceProvider from "@/customer/components/workspace-provider";
+import { MotionProvider } from "@/customer/components/motion-provider";
 import "./globals.css";
 import "@/customer/styles/customer.css";
 
@@ -21,7 +22,7 @@ export default function RootLayout({
       <body>
         <WorkspaceProvider>
           <CustomerProvider>
-            <CustomerShell>{children}</CustomerShell>
+            <CustomerShell><MotionProvider>{children}</MotionProvider></CustomerShell>
           </CustomerProvider>
         </WorkspaceProvider>
       </body>

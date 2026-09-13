@@ -38,6 +38,7 @@ export type Staff = {
 };
 export type Appointment = {
   id: string;
+  startsAt?: string;
   customerId: string;
   serviceId: string;
   staffId: string;

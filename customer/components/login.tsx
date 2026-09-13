@@ -4,10 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { LockKeyhole } from "lucide-react";
+import { ArrowRight, LockKeyhole, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { apiError, login, logout } from "@/customer/lib/api";
-import { pageVariants, sectionVariants, itemVariants } from "@/customer/lib/motion";
+import {
+  pageVariants,
+  sectionVariants,
+  itemVariants,
+} from "@/customer/lib/motion";
 import { useCustomer } from "./provider";
 
 export default function LoginPage() {
@@ -41,9 +45,7 @@ export default function LoginPage() {
             : user.role === "PLATFORM_ADMIN"
               ? " Use the Super Admin Console (https://saas-provider-opal.vercel.app) to manage the platform."
               : "";
-        throw new Error(
-          `This portal is for customers only.${portalHint}`,
-        );
+        throw new Error(`This portal is for customers only.${portalHint}`);
       }
       await queryClient.invalidateQueries({ queryKey: ["customer-session"] });
       await queryClient.invalidateQueries({ queryKey: ["customer-account"] });
@@ -67,10 +69,7 @@ export default function LoginPage() {
         className="customer-panel customer-login-card"
         variants={sectionVariants}
       >
-        <motion.span
-          className="customer-login-icon"
-          variants={itemVariants}
-        >
+        <motion.span className="customer-login-icon" variants={itemVariants}>
           <LockKeyhole />
         </motion.span>
         <motion.div variants={itemVariants}>
@@ -115,7 +114,24 @@ export default function LoginPage() {
             {saving ? "Signing in…" : "Sign in"}
           </button>
         </motion.form>
-        <motion.div variants={itemVariants}>
+        <motion.div className="customer-signup-cta" variants={itemVariants}>
+          <div>
+            <span className="customer-signup-icon">
+              <UserPlus size={18} />
+            </span>
+            <p>
+              <strong>New to Serenity?</strong>Create a free customer account to
+              book and manage appointments.
+            </p>
+          </div>
+          <Link href="/register" className="customer-btn primary full">
+            Create a customer account <ArrowRight size={16} />
+          </Link>
+        </motion.div>
+        <motion.div
+          className="customer-login-secondary"
+          variants={itemVariants}
+        >
           <Link href="/" className="customer-back-link">
             Continue browsing salons
           </Link>

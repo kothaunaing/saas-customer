@@ -1365,3 +1365,14 @@ a:focus-visible {
   outline: 2px solid #f6307860;
   outline-offset: 1px;
 }
+/* A stable layout root for route-level Framer Motion transitions. */
+.app-route-motion { min-height: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
