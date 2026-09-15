@@ -1,6 +1,7 @@
 "use client";
+/* oxlint-disable react/react-compiler -- hydrates untouched booking fields from asynchronously loaded account data */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,12 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { motion, AnimatePresence } from "framer-motion";
 import { getAvailability } from "@/customer/lib/api";
-import {
-  firstBookableDate,
-  dateLabel,
-  timeLabel,
-  type SalonId,
-} from "@/customer/lib/domain";
+import { firstBookableDate, dateLabel, timeLabel, type SalonId } from "@/customer/lib/domain";
 import { duration, initials, money } from "@/customer/lib/domain";
 import { useCustomer, type Contact, type OwnedBooking } from "./provider";
 import {
@@ -38,13 +34,7 @@ import {
   ease,
 } from "@/customer/lib/motion";
 
-const labels = [
-  "Service",
-  "Specialist",
-  "Date & time",
-  "Your details",
-  "Confirm",
-];
+const labels = ["Service", "Specialist", "Date & time", "Your details", "Confirm"];
 
 /** Direction-aware slide variants for the booking wizard steps. */
 function stepVariants(direction: number) {
@@ -70,9 +60,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
   const original = customer.draft?.editingId
     ? source.appointments.find((item) => item.id === customer.draft?.editingId)
     : undefined;
-  const [step, setStep] = useState(
-    original ? 2 : customer.draft?.staffId ? 1 : 0,
-  );
+  const [step, setStep] = useState(original ? 2 : customer.draft?.staffId ? 1 : 0);
   const [direction, setDirection] = useState(0);
 
   const [serviceId, setServiceId] = useState(
@@ -81,9 +69,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
       source.services.find((item) => item.active)?.id ??
       "",
   );
-  const [staffId, setStaffId] = useState(
-    customer.draft?.staffId ?? original?.staffId ?? "any",
-  );
+  const [staffId, setStaffId] = useState(customer.draft?.staffId ?? original?.staffId ?? "any");
   const firstDate = firstBookableDate();
   const [date, setDate] = useState(original?.date ?? firstDate);
   const [time, setTime] = useState(original?.time ?? "");
@@ -93,13 +79,25 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
     );
     return owned?.contact ?? customer.profile;
   });
+  const ownedContact = customer.owned.find(
+    (item) => item.appointmentId === original?.id && item.salonId === salonId,
+  )?.contact;
+  const savedContact = ownedContact ?? customer.profile;
+  useEffect(() => {
+    // The provider loads the account asynchronously, after this component's
+    // initial state is created. Fill untouched fields when that data arrives.
+    setContact((current) => ({
+      name: current.name || savedContact.name,
+      email: current.email || savedContact.email,
+      phone: current.phone || savedContact.phone,
+      notes: current.notes || savedContact.notes,
+    }));
+  }, [savedContact.name, savedContact.email, savedContact.phone, savedContact.notes]);
   const [error, setError] = useState("");
   const [result, setResult] = useState<OwnedBooking | null>(null);
   const [saving, setSaving] = useState(false);
   const service = source.services.find((item) => item.id === serviceId);
-  const qualified = source.staff.filter(
-    (item) => item.active && item.services.includes(serviceId),
-  );
+  const qualified = source.staff.filter((item) => item.active && item.services.includes(serviceId));
   const availability = useQuery({
     queryKey: ["availability", salonId, date, serviceId, staffId],
     queryFn: () => getAvailability(salonId, date, serviceId, staffId),
@@ -107,8 +105,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
   });
   const slots = availability.data ?? [];
   const selectedSlot = slots.find((slot) => slot.time === time);
-  const resolvedStaffId =
-    staffId === "any" ? (selectedSlot?.staffIds[0] ?? "") : staffId;
+  const resolvedStaffId = staffId === "any" ? (selectedSlot?.staffIds[0] ?? "") : staffId;
   const member = source.staff.find((item) => item.id === resolvedStaffId);
 
   function goToStep(next: number) {
@@ -136,19 +133,12 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
         initial="hidden"
         animate="visible"
       >
-        <motion.section
-          className="customer-panel customer-login-card"
-          variants={sectionVariants}
-        >
+        <motion.section className="customer-panel customer-login-card" variants={sectionVariants}>
           <h1>Sign in to book</h1>
           <p className="customer-lead">
-            Your account keeps confirmations and appointment changes in one
-            place.
+            Your account keeps confirmations and appointment changes in one place.
           </p>
-          <Link
-            className="customer-btn primary full"
-            href={`/login?next=/${salonId}/appointment`}
-          >
+          <Link className="customer-btn primary full" href={`/login?next=/${salonId}/appointment`}>
             Sign in to continue
           </Link>
           <Link className="customer-back-link" href={`/${salonId}`}>
@@ -161,12 +151,9 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
 
   function next() {
     setError("");
-    if (step === 0 && !serviceId)
-      return setError("Choose a treatment to continue.");
-    if (step === 1 && !staffId)
-      return setError("Choose a specialist to continue.");
-    if (step === 2 && (!date || !time))
-      return setError("Choose an available date and time.");
+    if (step === 0 && !serviceId) return setError("Choose a treatment to continue.");
+    if (step === 1 && !staffId) return setError("Choose a specialist to continue.");
+    if (step === 2 && (!date || !time)) return setError("Choose an available date and time.");
     if (
       step === 3 &&
       (!contact.name.trim() ||
@@ -193,11 +180,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
       });
       setResult(booking);
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Your booking could not be saved.",
-      );
+      setError(cause instanceof Error ? cause.message : "Your booking could not be saved.");
     } finally {
       setSaving(false);
     }
@@ -222,15 +205,17 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
             <strong>Booking confirmed</strong>Reference {result.reference}
           </div>
         </motion.div>
-        <motion.section
-          className="customer-panel booking-success"
-          variants={sectionVariants}
-        >
+        <motion.section className="customer-panel booking-success" variants={sectionVariants}>
           <motion.div
             className="customer-confirm-check"
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+              delay: 0.2,
+            }}
           >
             <Check size={30} />
           </motion.div>
@@ -245,7 +230,10 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
           <motion.ul variants={listVariants} initial="hidden" animate="visible">
             {[
               [<CalendarDays key="c" />, `${dateLabel(date)}, ${timeLabel(time)}`],
-              [<Clock3 key="cl" />, `${service.name} · ${duration(service.duration)} · ${money(service.price)}`],
+              [
+                <Clock3 key="cl" />,
+                `${service.name} · ${duration(service.duration)} · ${money(service.price)}`,
+              ],
               [<UserRound key="u" />, member.name],
               [<MapPin key="m" />, `${source.name} · ${source.address}`],
               [<Phone key="p" />, source.phone],
@@ -256,10 +244,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
               </motion.li>
             ))}
           </motion.ul>
-          <motion.div
-            className="customer-actions"
-            variants={sectionVariants}
-          >
+          <motion.div className="customer-actions" variants={sectionVariants}>
             <Link className="customer-btn primary" href="/account">
               See my bookings
             </Link>
@@ -292,14 +277,10 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
               disabled={index > step}
               onClick={() => index < step && goToStep(index)}
             >
-              <span className="step-number">
-                {index < step ? <Check size={12} /> : index + 1}
-              </span>
+              <span className="step-number">{index < step ? <Check size={12} /> : index + 1}</span>
               {label}
             </button>
-            {index < labels.length - 1 && (
-              <span className="step-separator">/</span>
-            )}
+            {index < labels.length - 1 && <span className="step-separator">/</span>}
           </div>
         ))}
       </motion.div>
@@ -320,10 +301,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                 <h1>What would you like?</h1>
                 <p>Prices include your consultation. You can change this later.</p>
               </div>
-              <RadioGroup
-                value={serviceId}
-                onValueChange={(value) => setServiceId(String(value))}
-              >
+              <RadioGroup value={serviceId} onValueChange={(value) => setServiceId(String(value))}>
                 <motion.div variants={listVariants} initial="hidden" animate="visible">
                   {source.services
                     .filter((item) => item.active)
@@ -360,9 +338,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
             <>
               <div className="booking-heading">
                 <h1>Who would you like?</h1>
-                <p>
-                  Choose your specialist, or let us match you with anyone available.
-                </p>
+                <p>Choose your specialist, or let us match you with anyone available.</p>
               </div>
               <RadioGroup
                 value={staffId}
@@ -384,8 +360,8 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                     <div className="booking-choice-body">
                       <h3>Anyone available</h3>
                       <p>
-                        We&apos;ll match you with a qualified specialist who is free at
-                        your chosen time.
+                        We&apos;ll match you with a qualified specialist who is free at your chosen
+                        time.
                       </p>
                     </div>
                   </motion.label>
@@ -396,18 +372,11 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                       key={person.id}
                       variants={itemVariants}
                     >
-                      <RadioGroupItem
-                        id={`specialist-${person.id}`}
-                        value={person.id}
-                      />
+                      <RadioGroupItem id={`specialist-${person.id}`} value={person.id} />
                       <span className="customer-avatar">{initials(person.name)}</span>
                       <div className="booking-choice-body">
                         <h3>{person.name}</h3>
-                        <p>
-                          {person.role === "Staff"
-                            ? "Beauty specialist"
-                            : person.role}
-                        </p>
+                        <p>{person.role === "Staff" ? "Beauty specialist" : person.role}</p>
                       </div>
                     </motion.label>
                   ))}
@@ -425,10 +394,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
             <>
               <div className="booking-heading">
                 <h1>Pick a time</h1>
-                <p>
-                  Only genuinely free slots are shown from the salon&apos;s working
-                  diary.
-                </p>
+                <p>Only genuinely free slots are shown from the salon&apos;s working diary.</p>
               </div>
               <motion.div
                 className="booking-date-grid"
@@ -545,13 +511,10 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                   </motion.label>
                 ))}
                 <motion.label className="customer-field" variants={itemVariants}>
-                  Anything we should know?{" "}
-                  <span className="font-normal muted">(optional)</span>
+                  Anything we should know? <span className="font-normal muted">(optional)</span>
                   <textarea
                     value={contact.notes}
-                    onChange={(event) =>
-                      setContact({ ...contact, notes: event.target.value })
-                    }
+                    onChange={(event) => setContact({ ...contact, notes: event.target.value })}
                     placeholder="Allergies, sensitivities, or what you'd like from the appointment."
                   />
                 </motion.label>
@@ -575,34 +538,20 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
                   <div className="booking-notice">
                     <Info size={17} />
                     <span>
-                      Nothing is charged now. You&apos;ll pay at the salon. Free to
-                      cancel or move up to 24 hours before your appointment.
+                      Nothing is charged now. You&apos;ll pay at the salon. Free to cancel or move
+                      up to 24 hours before your appointment.
                     </span>
                   </div>
                   <div className="customer-actions">
-                    <button
-                      className="customer-btn primary"
-                      disabled={saving}
-                      onClick={confirm}
-                    >
-                      {saving
-                        ? "Confirming…"
-                        : original
-                          ? "Confirm new time"
-                          : "Confirm booking"}
+                    <button className="customer-btn primary" disabled={saving} onClick={confirm}>
+                      {saving ? "Confirming…" : original ? "Confirm new time" : "Confirm booking"}
                     </button>
-                    <button
-                      className="customer-btn ghost"
-                      onClick={() => goToStep(2)}
-                    >
+                    <button className="customer-btn ghost" onClick={() => goToStep(2)}>
                       Change time
                     </button>
                   </div>
                 </motion.div>
-                <motion.aside
-                  className="customer-panel booking-summary"
-                  variants={itemVariants}
-                >
+                <motion.aside className="customer-panel booking-summary" variants={itemVariants}>
                   <h2>Your booking</h2>
                   <ul>
                     <li>
@@ -674,9 +623,7 @@ export default function BookingFlow({ salonId }: { salonId: SalonId }) {
         >
           <button
             className="customer-btn ghost"
-            onClick={() =>
-              step ? goToStep(step - 1) : router.push(`/${salonId}`)
-            }
+            onClick={() => (step ? goToStep(step - 1) : router.push(`/${salonId}`))}
           >
             Back
           </button>
