@@ -66,8 +66,10 @@ export function timeLabel(value: string) {
   const [hour, minute] = value.split(":").map(Number);
   return `${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "PM" : "AM"}`;
 }
-export const money = (value: number, currency = "USD") =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
+export const money = (value: number, currency = "MMK") =>
+  currency === "MMK"
+    ? `Ks ${new Intl.NumberFormat("en-MM").format(value)}`
+    : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
 export const initials = (name: string) =>
   name
     .split(" ")
