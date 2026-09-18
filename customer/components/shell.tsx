@@ -36,7 +36,7 @@ export default function CustomerShell({
     router.push("/");
   }
   return (
-    <div className="customer-app dark">
+    <div className="customer-app">
       <motion.header
         className="customer-header"
         initial={{ opacity: 0, y: -8 }}
@@ -64,7 +64,7 @@ export default function CustomerShell({
               >
                 {initials(customer.profile.name || "Customer")}
               </PopoverTrigger>
-              <PopoverContent align="end" className="customer-menu dark">
+              <PopoverContent align="end" className="customer-menu">
                 <strong>{customer.profile.name || "Customer"}</strong>
                 <p>Customer account</p>
                 <Link href="/account?tab=bookings">

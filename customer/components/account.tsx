@@ -613,7 +613,7 @@ export default function AccountPage() {
         open={!!cancelTarget}
         onOpenChange={(open) => !open && setCancelTarget(null)}
       >
-        <AlertDialogContent className="customer-dialog dark">
+        <AlertDialogContent className="customer-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -644,7 +644,7 @@ export default function AccountPage() {
         open={!!reviewTarget}
         onOpenChange={(open) => !open && setReviewTarget(null)}
       >
-        <AlertDialogContent className="customer-dialog dark">
+        <AlertDialogContent className="customer-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>How was your visit?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -692,7 +692,7 @@ export default function AccountPage() {
         open={!!redeemReward}
         onOpenChange={(open) => !open && setRedeemReward(null)}
       >
-        <AlertDialogContent className="customer-dialog dark">
+        <AlertDialogContent className="customer-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Gift className="text-[#fa3079]" size={20} />
@@ -706,8 +706,8 @@ export default function AccountPage() {
 
           <motion.div
             style={{
-              background: "#1c1917",
-              border: "1px solid #332d29",
+              background: "#ffffff",
+              border: "1px solid #e7e7ec",
               borderRadius: "10px",
               padding: "16px",
               margin: "14px 0",
@@ -722,7 +722,7 @@ export default function AccountPage() {
                 fontSize: "11px",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                color: "#a8a29e",
+                color: "#6b6670",
               }}
             >
               Your Redemption Voucher Pass
@@ -747,7 +747,7 @@ export default function AccountPage() {
             <p
               style={{
                 fontSize: "12px",
-                color: "#d6d3d1",
+                color: "#343036",
                 margin: "4px 0 12px",
               }}
             >

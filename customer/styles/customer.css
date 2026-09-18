@@ -1,28 +1,159 @@
 .customer-app,
 .customer-menu,
 .customer-dialog {
-  --background: #0d0c0b;
-  --foreground: #f5f3f1;
-  --card: #201c19;
-  --card-foreground: #f5f3f1;
-  --popover: #201c19;
-  --popover-foreground: #f5f3f1;
+  color-scheme: light;
+  --background: #fcfcfd;
+  --foreground: #222326;
+  --card: #ffffff;
+  --card-foreground: #222326;
+  --popover: #ffffff;
+  --popover-foreground: #222326;
   --primary: #fa3079;
   --primary-foreground: #fff;
-  --secondary: #2b2724;
-  --secondary-foreground: #f5f3f1;
-  --muted: #2b2724;
-  --muted-foreground: #aaa49e;
-  --accent: #32262c;
-  --accent-foreground: #f5f3f1;
-  --border: #35302c;
-  --input: #39332f;
+  --secondary: #f5f5f6;
+  --secondary-foreground: #45454b;
+  --muted: #f6f6f7;
+  --muted-foreground: #74757d;
+  --accent: #fcebf2;
+  --accent-foreground: #da2666;
+  --border: #e7e7ec;
+  --input: #e1e1e6;
   --ring: #fa3079;
   color: var(--foreground);
   background: var(--background);
   font-size: 16px;
   line-height: 1.6;
   letter-spacing: -0.02em;
+}
+
+/* Customer portal light theme */
+.customer-header {
+  background: rgb(255 255 255 / 92%);
+  border-color: var(--border);
+  box-shadow: 0 1px 0 rgb(20 20 30 / 3%);
+}
+.customer-mode,
+.customer-intro p,
+.customer-lead,
+.customer-section-heading > span,
+.salon-card-body p,
+.customer-panel > p,
+.treatment-body > p,
+.customer-person p,
+.customer-team-card > p,
+.review-card p,
+.customer-field label,
+.booking-summary-row span,
+.account-detail span {
+  color: var(--muted-foreground);
+}
+.customer-my-bookings,
+.salon-hours strong,
+.booking-summary-row strong,
+.account-detail strong {
+  color: var(--foreground);
+}
+.salon-card,
+.customer-panel,
+.treatment-card,
+.booking-choice,
+.booking-calendar,
+.booking-summary,
+.review-card,
+.customer-dialog {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: 0 8px 28px rgb(24 24 32 / 5%);
+}
+.salon-card:hover,
+.booking-choice:hover,
+.booking-choice.selected {
+  border-color: rgb(250 48 121 / 45%);
+  box-shadow: 0 10px 32px rgb(250 48 121 / 8%);
+}
+.customer-tabs {
+  background: rgb(252 252 253 / 94%);
+  border-color: var(--border);
+}
+.customer-tabs [data-slot="tabs-trigger"],
+.treatment-filters [data-slot="tabs-trigger"],
+.account-tabs [data-slot="tabs-trigger"] {
+  color: var(--muted-foreground);
+}
+.customer-tabs [data-slot="tabs-trigger"][data-active],
+.treatment-filters [data-slot="tabs-trigger"][data-active],
+.account-tabs [data-slot="tabs-trigger"][data-active] {
+  color: var(--foreground);
+}
+.treatment-filters [data-slot="tabs-list"],
+.account-tabs [data-slot="tabs-list"] {
+  background: var(--muted);
+}
+.treatment-filters [data-slot="tabs-trigger"][data-active],
+.account-tabs [data-slot="tabs-trigger"][data-active] {
+  background: var(--card);
+  box-shadow: 0 1px 4px rgb(20 20 30 / 8%);
+}
+.customer-btn {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.customer-btn:hover {
+  background: var(--muted);
+  border-color: #d8d8de;
+}
+.customer-btn.primary,
+.customer-btn.primary:hover,
+.time-choice.selected,
+.done .step-number {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.customer-category,
+.review-avatar,
+.step-number,
+.booking-success-icon {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.review-meter [data-slot="progress-track"] {
+  background: #f6dbe5;
+}
+.time-choice,
+.customer-field input,
+.customer-field select,
+.customer-field textarea,
+.customer-dialog textarea {
+  background: #fff;
+  border-color: var(--input);
+  color: var(--foreground);
+}
+.time-choice:hover {
+  background: var(--accent);
+  border-color: rgb(250 48 121 / 35%);
+}
+.booking-divider {
+  background: var(--border);
+}
+.specialist-any {
+  background: #fafafb;
+  border-color: #d7d7dc;
+}
+.customer-status.confirmed {
+  background: #eaf7ef;
+  color: #287858;
+}
+.customer-status.cancelled,
+.customer-error {
+  background: #fff0f3;
+  color: #b8325d;
+  border-color: #f3cad6;
+}
+.customer-booking-note {
+  background: var(--accent);
+  border-color: #f5ccdc;
 }
 .customer-app {
   min-height: 100vh;
@@ -1332,4 +1463,90 @@
   .customer-account-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Keep legacy component rules on the shared light palette. */
+.customer-app .customer-header {
+  background: rgb(255 255 255 / 92%);
+  border-color: var(--border);
+  box-shadow: 0 1px 0 rgb(20 20 30 / 3%);
+}
+.customer-app .customer-tabs {
+  background: rgb(252 252 253 / 94%);
+  border-color: var(--border);
+}
+.customer-app :is(
+  .salon-card,
+  .customer-panel,
+  .treatment-card,
+  .booking-choice,
+  .booking-calendar,
+  .booking-summary,
+  .review-card
+),
+.customer-dialog {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: 0 8px 28px rgb(24 24 32 / 5%);
+}
+.customer-app :is(.salon-card:hover, .booking-choice:hover, .booking-choice.selected) {
+  border-color: rgb(250 48 121 / 45%);
+  box-shadow: 0 10px 32px rgb(250 48 121 / 8%);
+}
+.customer-app :is(.treatment-filters, .account-tabs) [data-slot="tabs-list"] {
+  background: var(--muted);
+}
+.customer-app :is(.treatment-filters, .account-tabs) [data-slot="tabs-trigger"][data-active] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 4px rgb(20 20 30 / 8%);
+}
+.customer-app .customer-btn:not(.primary) {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.customer-app .customer-btn:not(.primary):hover {
+  background: var(--muted);
+  border-color: #d8d8de;
+}
+.customer-app :is(.customer-category, .review-avatar, .step-number) {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.customer-app :is(.time-choice, .customer-field input, .customer-field select, .customer-field textarea),
+.customer-dialog textarea {
+  background: #fff;
+  border-color: var(--input);
+  color: var(--foreground);
+}
+.customer-app .time-choice:hover {
+  background: var(--accent);
+  border-color: rgb(250 48 121 / 35%);
+}
+.customer-app .booking-divider {
+  background: var(--border);
+}
+.customer-app .specialist-any {
+  background: #fafafb;
+  border-color: #d7d7dc;
+}
+.customer-app .customer-status.confirmed {
+  background: #eaf7ef;
+  color: #287858;
+}
+.customer-app .customer-status.cancelled,
+.customer-app .customer-error {
+  background: #fff0f3;
+  color: #b8325d;
+  border-color: #f3cad6;
+}
+.customer-app .booking-success {
+  background: #edf9f2;
+  border-color: #bfe8d0;
+  color: #267451;
+}
+.customer-app .customer-booking-note {
+  background: var(--accent);
+  border-color: #f5ccdc;
 }
