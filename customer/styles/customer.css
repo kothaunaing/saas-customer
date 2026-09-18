@@ -1550,3 +1550,101 @@
   background: var(--accent);
   border-color: #f5ccdc;
 }
+
+/* Light-theme text contrast */
+.customer-app :is(
+  .customer-mode,
+  .customer-my-bookings,
+  .customer-intro p,
+  .customer-lead,
+  .customer-section-heading > span,
+  .customer-meta,
+  .customer-rating small,
+  .discovery-note,
+  .customer-footer,
+  .customer-panel > p,
+  .salon-hours span,
+  .treatment-body > p,
+  .customer-person p,
+  .customer-team-card > p,
+  .customer-review-summary small,
+  .review-card p,
+  .booking-heading p,
+  .booking-choice p,
+  .customer-signup-cta p,
+  .customer-field small,
+  .booking-notice,
+  .booking-summary li,
+  .booking-total,
+  .booking-success > p,
+  .customer-empty,
+  .account-heading p,
+  .account-reward-grid p,
+  .customer-profile-note,
+  .customer-back-link,
+  .booking-card-line svg,
+  .customer-credit
+) {
+  color: var(--muted-foreground);
+}
+.customer-app :is(
+  .booking-steps button,
+  .customer-tabs [data-slot="tabs-trigger"],
+  .treatment-filters [data-slot="tabs-trigger"],
+  .account-tabs [data-slot="tabs-trigger"]
+) {
+  color: #686872;
+}
+.customer-app :is(
+  .booking-steps button.active,
+  .customer-tabs [data-slot="tabs-trigger"][data-active],
+  .treatment-filters [data-slot="tabs-trigger"][data-active],
+  .account-tabs [data-slot="tabs-trigger"][data-active],
+  .customer-signup-cta strong,
+  .booking-summary li:first-child,
+  .booking-total strong,
+  .customer-empty h3,
+  .customer-points
+) {
+  color: var(--foreground);
+}
+.customer-app .booking-steps button:disabled {
+  color: #8a8a93;
+  opacity: 1;
+}
+.customer-app .booking-steps button.active {
+  color: var(--foreground);
+}
+.customer-app .step-separator {
+  color: #9a9aa3;
+}
+.customer-app .active .step-number {
+  color: var(--primary);
+  background: #fff;
+  border-color: var(--primary);
+}
+.customer-app .done .step-number {
+  color: #fff;
+  background: var(--primary);
+}
+.customer-app .booking-calendar button:not([data-selected-single="true"]) {
+  color: var(--foreground);
+}
+.customer-app .customer-login-icon {
+  background: var(--accent);
+}
+.customer-app .booking-notice {
+  background: #f8f8fa;
+  border-color: var(--border);
+}
+.customer-app .booking-nav {
+  border-color: var(--border);
+}
+.customer-app .booking-complete-banner {
+  background: #eaf7ef;
+  border-color: #bfe8d0;
+  color: #287858;
+}
+.customer-app .booking-complete-banner strong {
+  color: #205f46;
+}
